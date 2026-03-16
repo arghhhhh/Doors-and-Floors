@@ -168,6 +168,23 @@ unity-cli raw apply_csharp_edits --json '{"files":[{"relative":"Assets/Scripts/A
 unity-cli raw get_compilation_state --json '{}'
 ```
 
+### Critical: Forcing Recompilation After External C# Edits
+
+When C# files are edited via Claude's Edit/Write tools (not via unity-cli's `write_csharp_file`/`apply_csharp_edits`), Unity's filesystem watcher often does NOT detect the change, so recompilation won't trigger. **After every external C# edit:**
+
+```bash
+# 1. Append whitespace to update the file's modification timestamp
+echo " " >> "Assets/Scripts/YourFile.cs"
+
+# 2. Force Unity to re-scan the asset database
+unity-cli raw refresh_assets --json '{}'
+
+# 3. Verify recompilation happened (check lastCompilationTime updated)
+unity-cli raw get_compilation_state --json '{}'
+```
+
+If `lastCompilationTime` didn't change, the edit wasn't picked up. This is NOT needed when using unity-cli's own C# write tools (`write_csharp_file`, `create_csharp_file`, `apply_csharp_edits`) as they handle compilation automatically via `waitForCompile:true`.
+
 ### Editor Operations
 
 ```bash
