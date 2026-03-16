@@ -1,6 +1,6 @@
 <UXML xmlns="UnityEngine.UIElements" xmlns:appui="Unity.AppUI.UI">
     <VisualElement name="score-entry" class="score-entry">
         <VisualElement name="score-photo" class="score-photo" />
-        <appui:Text name="score-text" text="" size="S" class="score-text" />
+        <appui:Text name="score-text" text="" size="XS" class="score-text" />
     </VisualElement>
 </UXML>

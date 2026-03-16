@@ -162,7 +162,7 @@ public class UIManager : MonoBehaviour
             int m = (int)(scores[i].time / 60f);
             int s = (int)(scores[i].time % 60f);
             int ms = (int)((scores[i].time * 100f) % 100f);
-            string timeStr = $"{i + 1}. {m:00}:{s:00}:{ms:00}";
+            string timeStr = $"#{i + 1}\n{m:00}:{s:00}:{ms:00}";
 
             var appuiTextEl = entry.Q<Unity.AppUI.UI.Text>("score-text");
             if (appuiTextEl != null)
