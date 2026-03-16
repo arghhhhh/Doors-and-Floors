@@ -1,6 +1,46 @@
-# Scene Setup - GameScreen
+# Scene Setup
 
-## Hierarchy
+## StartScreen
+
+### Hierarchy
+
+```
+Main Camera          Orthographic, default settings
+Directional Light    Default scene lighting
+ZED_Rig_Mono         Prefab instance (DontDestroyOnLoad)
+  ├── ZEDManager       Camera connection, body tracking, bodyFormat=BODY_38
+  ├── ZEDTrackingProvider  Singleton, player-body assignments
+  └── Camera_Left      Small viewport preview (top-left, 25% of screen, depth=10)
+        └── Frame      Rendering plane for camera feed
+StartScreenManager   StartScreenManager script, references UI texts
+Canvas               Screen Space Overlay, CanvasScaler (1920x1080 ref)
+  ├── TitleText        Text, "ZED GAMES", font size 72, centered
+  ├── P1StatusText     Text, bottom-left, player 1 status
+  ├── P2StatusText     Text, bottom-right, player 2 status
+  └── CountdownText    Text, centered, P2 countdown timer
+```
+
+### ZEDManager Configuration
+
+Aligned with the BodyTrackingMulti sample scene. Key settings:
+- `inputType`: USB
+- `bodyFormat`: BODY_38
+- `bodyTrackingModel`: HUMAN_BODY_FAST
+- `bodyTrackingTracking`: true
+- `bodyTrackingConfidenceThreshold`: 40
+- `bodyTrackingMinimumKPThreshold`: 8
+- `bodyTrackingMaxRange`: 10m
+- `bodyTrackingSkeletonSmoothing`: 0
+- `dontDestroyOnLoad`: true
+- `trackingIsStatic`: true
+- `enableSpatialMemory`: false
+- `positionalTrackingMode`: GEN_1
+
+---
+
+## GameScreen
+
+### Hierarchy
 
 ```
 Main Camera          Orthographic, size 8.5, position (0, 7.5, -10), dark bg
@@ -12,36 +52,47 @@ Floor_2              Cube, Layer: Ground(8), scale (14, 0.3, 1)
 Floor_3              Cube, Layer: Ground(8), scale (14, 0.3, 1)
 Floor_4              Cube, Layer: Ground(8), scale (14, 0.3, 1)
 Floor_5              Cube, Layer: Ground(8), scale (14, 0.3, 1)  <- Win floor
-Floor_6              Cube, Layer: Ground(8), scale (14, 0.3, 1)  <- Roof (no gameplay, just ceiling for last belt)
+Floor_6              Cube, Layer: Ground(8), scale (14, 0.3, 1)  <- Roof (ceiling for last belt)
 Wall_Left            Cube, Layer: Ground(8), X=-7.25, scale (0.5, 16, 1)
 Wall_Right           Cube, Layer: Ground(8), X=+7.25, scale (0.5, 16, 1)
 Player1              Capsule, Layer: Player(9), Rigidbody + PlayerController
 Player2              Capsule, Layer: Player(9), Rigidbody + PlayerController
 GameManager          Empty, GameManager + DoorPairGenerator + HighScoreManager
+GameScreenManager    Empty, GameScreenManager (references Player1, Player2)
 WinZone              Empty, BoxCollider(trigger) + WinTrigger, spans Floor_5 area
 Canvas               Screen Space Overlay, CanvasScaler (1920x1080 ref), UIManager
-  TimerText          Text, top-center, "00:00:00"
-  WinPanel           Panel (starts inactive), dark semi-transparent bg
-    WinnerText       Text, "Player X Wins!"
-    WinnerPhoto      RawImage (auto-created if missing)
-    FinalTimeText    Text
-    HighScoreLabel   Text
-    HighScoreList    Container (auto-created if missing)
-    InstructionsText Text
+  ├── TimerText      Text, top-center, "00:00:00"
+  └── WinPanel       Panel (starts inactive), dark semi-transparent bg
+        ├── WinnerText       Text, "Player X Wins!"
+        ├── WinnerPhoto      RawImage (auto-created if missing)
+        ├── FinalTimeText    Text
+        ├── HighScoreLabel   Text
+        ├── HighScoreList    Container (auto-created if missing)
+        └── InstructionsText Text
 EventSystem          EventSystem + StandaloneInputModule
 ```
+
+Note: ZED_Rig_Mono is NOT in this scene — it persists from StartScreen via DontDestroyOnLoad.
+
+### Runtime-Attached Components
+
+When body tracking is active, `GameScreenManager` attaches at runtime:
+- **BodyTrackingInput** on Player1 and/or Player2 (depending on assignments)
+- **TrackingLostIndicator** child on each tracked player (world-space canvas with red "X TRACKING LOST" text + countdown)
+
+---
 
 ## Layers
 
 | Index | Name    | Purpose                                    |
-|-------|---------|--------------------------------------------|
-| 0     | Default | Floors, walls, doors, general objects       |
+|-------|---------|------------------------------------------|
+| 0     | Default | Floors, walls, doors, general objects     |
 | 8     | Ground  | Floor/wall colliders (used by ground raycast) |
-| 9     | Player  | Player capsules (self-collision disabled)    |
+| 9     | Player  | Player capsules (self-collision disabled)  |
 
 ## Runtime-Generated Objects
 
-The following are created by `DoorPairGenerator.Generate()` at runtime under the GameManager:
+Created by `DoorPairGenerator.Generate()` at runtime under GameManager:
 
 ```
 GameManager/
@@ -68,11 +119,11 @@ Each door is a Cube primitive with:
 | Property       | Player 1         | Player 2              |
 |----------------|------------------|-----------------------|
 | playerNumber   | 1                | 2                     |
-| leftKey        | A                | LeftArrow (276)       |
-| rightKey       | D                | RightArrow (275)      |
-| jumpKey        | W                | UpArrow (273)         |
-| groundLayer    | Ground (bit 256) | Ground (bit 256)      |
-| profilePhoto   | profile-demo-player-1.jpg | profile-demo-player-2.jpg |
+| leftKey        | A                | LeftArrow             |
+| rightKey       | D                | RightArrow            |
+| jumpKey        | W                | UpArrow               |
+| groundLayer    | Ground (Layer 8) | Ground (Layer 8)      |
+| useBodyTracking| false (set at runtime by GameScreenManager) | same |
 | Rigidbody      | Constraints: FreezeZ + FreezeRotation, Interpolate, Continuous CD |
 
 ## Camera
