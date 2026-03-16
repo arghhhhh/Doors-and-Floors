@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -33,10 +34,12 @@ public class ZEDTrackingProvider : MonoBehaviour
     public event Action<int, DetectedBody> OnPlayerBodyUpdated;  // (playerNumber, body)
     public event Action<int> OnPlayerBodyLost;                    // (playerNumber)
 
-    public bool IsZEDReady { get; private set; }
+    [HideInInspector] public bool IsZEDReady;
 
     void Awake()
     {
+        IsZEDReady = false;
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -45,33 +48,107 @@ public class ZEDTrackingProvider : MonoBehaviour
         Instance = this;
 
         if (zedManager == null)
+            zedManager = GetComponent<ZEDManager>();
+        if (zedManager == null)
             zedManager = FindObjectOfType<ZEDManager>();
     }
 
     void OnEnable()
     {
         if (zedManager != null)
-        {
-            zedManager.OnZEDReady += OnZEDReady;
             zedManager.OnBodyTracking += OnBodyTrackingFrame;
-        }
     }
 
     void OnDisable()
     {
         if (zedManager != null)
-        {
-            zedManager.OnZEDReady -= OnZEDReady;
             zedManager.OnBodyTracking -= OnBodyTrackingFrame;
+    }
+
+    void Start()
+    {
+        StartCoroutine(WaitForZEDReady());
+    }
+
+    IEnumerator WaitForZEDReady()
+    {
+        Debug.LogWarning("[ZEDTrackingProvider] WaitForZEDReady() started.");
+
+        // Poll until ANY ZEDManager in the scene becomes ready.
+        // Re-acquire reference each iteration to handle DontDestroyOnLoad duplication
+        // where our initial reference may point to a stale/destroyed instance.
+        int attempts = 0;
+        while (true)
+        {
+            // Re-find the ZEDManager each poll — handles instance changes from DontDestroyOnLoad
+            ZEDManager candidate = GetComponent<ZEDManager>();
+            if (candidate == null)
+                candidate = FindObjectOfType<ZEDManager>();
+
+            // Also scan all instances in case FindObjectOfType returns the wrong one
+            if (candidate != null && !candidate.IsZEDReady)
+            {
+                foreach (var mgr in FindObjectsOfType<ZEDManager>())
+                {
+                    if (mgr.IsZEDReady)
+                    {
+                        candidate = mgr;
+                        break;
+                    }
+                }
+            }
+
+            if (candidate != null && candidate.IsZEDReady)
+            {
+                zedManager = candidate;
+                Debug.LogWarning($"[ZEDTrackingProvider] ZEDManager ready (instanceId={zedManager.GetInstanceID()}) after {attempts} polls.");
+                break;
+            }
+
+            attempts++;
+            if (attempts % 50 == 0)
+                Debug.LogWarning($"[ZEDTrackingProvider] Still waiting (attempt {attempts})...");
+
+            yield return new WaitForSecondsRealtime(0.1f);
+        }
+
+        zedManager.OnBodyTracking -= OnBodyTrackingFrame;
+        zedManager.OnBodyTracking += OnBodyTrackingFrame;
+
+        OnZEDReady();
+    }
+
+    void Update()
+    {
+        // Fallback: if coroutine dies or misses, scan for a ready ZEDManager
+        if (!IsZEDReady)
+        {
+            foreach (var mgr in FindObjectsOfType<ZEDManager>())
+            {
+                if (mgr.IsZEDReady)
+                {
+                    zedManager = mgr;
+                    Debug.LogWarning("[ZEDTrackingProvider] Update() fallback found ready ZEDManager.");
+                    OnZEDReady();
+                    break;
+                }
+            }
         }
     }
 
     void OnZEDReady()
     {
+        if (IsZEDReady) return; // Prevent double-init
         IsZEDReady = true;
+
+        // Re-subscribe to body tracking (in case OnDisable/OnEnable cycled while we were waiting)
+        zedManager.OnBodyTracking -= OnBodyTrackingFrame;
+        zedManager.OnBodyTracking += OnBodyTrackingFrame;
+
         if (!zedManager.IsBodyTrackingRunning)
             zedManager.StartBodyTracking();
-        Debug.Log("[ZEDTrackingProvider] ZED ready, body tracking started.");
+
+        Debug.LogWarning("[ZEDTrackingProvider] ZED ready — StartBodyTracking() called.");
     }
 
     void OnBodyTrackingFrame(BodyTrackingFrame bodyFrame)
@@ -246,3 +323,9 @@ public class ZEDTrackingProvider : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 }
+ 
+ 
+ 
+ 
+ 
+ 
