@@ -120,19 +120,11 @@ public class ZEDTrackingProvider : MonoBehaviour
 
     void Update()
     {
-        // Fallback: if coroutine dies or misses, scan for a ready ZEDManager
-        if (!IsZEDReady)
+        // Lightweight fallback: if the coroutine found a zedManager but died before OnZEDReady
+        if (!IsZEDReady && zedManager != null && zedManager.IsZEDReady)
         {
-            foreach (var mgr in FindObjectsOfType<ZEDManager>())
-            {
-                if (mgr.IsZEDReady)
-                {
-                    zedManager = mgr;
-                    Debug.LogWarning("[ZEDTrackingProvider] Update() fallback found ready ZEDManager.");
-                    OnZEDReady();
-                    break;
-                }
-            }
+            Debug.LogWarning("[ZEDTrackingProvider] Update() fallback: calling OnZEDReady().");
+            OnZEDReady();
         }
     }
 
@@ -323,6 +315,7 @@ public class ZEDTrackingProvider : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 }
+ 
  
  
  
