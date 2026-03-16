@@ -1,0 +1,91 @@
+/* NES Theme — App UI CSS variable overrides */
+
+:root {
+    /* NES PPU color palette */
+    --nes-black: #0C0C0C;
+    --nes-dark-gray: #3C3C3C;
+    --nes-gray: #7C7C7C;
+    --nes-white: #FCFCFC;
+    --nes-blue: #0058F8;
+    --nes-dark-blue: #0000A8;
+    --nes-red: #F83800;
+    --nes-gold: #F8B800;
+    --nes-green: #00A800;
+
+    /* Backgrounds → NES black/dark blue */
+    --appui-backgrounds-100: var(--nes-black);
+    --appui-backgrounds-200: #101030;
+    --appui-backgrounds-300: var(--nes-dark-blue);
+
+    /* Foregrounds → NES white/gray */
+    --appui-foregrounds-100: var(--nes-white);
+    --appui-foregrounds-200: var(--nes-gray);
+    --appui-foregrounds-25: var(--nes-dark-gray);
+
+    /* Accent → NES blue */
+    --appui-accent-100: var(--nes-blue);
+
+    /* Destructive → NES red */
+    --appui-destructive-100: var(--nes-red);
+
+    /* Positive → NES green */
+    --appui-positive-100: var(--nes-green);
+
+    /* Warning → NES gold */
+    --appui-warning-100: var(--nes-gold);
+
+    /* Font → PressStart2P pixel font */
+    --appui-font-weights-100: url("project://database/Assets/UI/Fonts/PressStart2P-Regular.ttf");
+    --appui-font-weights-200: url("project://database/Assets/UI/Fonts/PressStart2P-Regular.ttf");
+
+    /* Borders — pixel-perfect: zero radius, chunky width */
+    --appui-border-radius-xs: 0px;
+    --appui-border-radius-sm: 0px;
+    --appui-border-radius-md: 0px;
+    --appui-border-radius-lg: 0px;
+    --appui-border-radius-xl: 0px;
+
+    --appui-alias-control-border-width: 3px;
+}
+
+/* Utility classes */
+
+.nes-panel {
+    border-width: 4px;
+    border-color: var(--nes-white);
+    background-color: var(--nes-black);
+    padding: 16px;
+}
+
+.nes-text-gold {
+    color: var(--nes-gold);
+}
+
+.nes-text-red {
+    color: var(--nes-red);
+}
+
+.nes-text-green {
+    color: var(--nes-green);
+}
+
+.nes-text-blue {
+    color: var(--nes-blue);
+}
+
+.nes-text-white {
+    color: var(--nes-white);
+}
+
+.nes-text-center {
+    -unity-text-align: middle-center;
+}
+
+.nes-photo {
+    border-width: 3px;
+    border-color: var(--nes-gold);
+}
+
+.nes-hidden {
+    display: none;
+}

@@ -14,7 +14,7 @@ ZED_Rig_Mono         Prefab instance (DontDestroyOnLoad)
         └── Frame      Rendering plane for camera feed
 StartScreenManager   StartScreenManager script, references UI texts
 Canvas               Screen Space Overlay, CanvasScaler (1920x1080 ref)
-  ├── TitleText        Text, "ZED GAMES", font size 72, centered
+  ├── TitleText        Text, "DOORS & FLOORS", font size 72, centered
   ├── P1StatusText     Text, bottom-left, player 1 status
   ├── P2StatusText     Text, bottom-right, player 2 status
   └── CountdownText    Text, centered, P2 countdown timer
@@ -23,6 +23,7 @@ Canvas               Screen Space Overlay, CanvasScaler (1920x1080 ref)
 ### ZEDManager Configuration
 
 Aligned with the BodyTrackingMulti sample scene. Key settings:
+
 - `inputType`: USB
 - `bodyFormat`: BODY_38
 - `bodyTrackingModel`: HUMAN_BODY_FAST
@@ -77,6 +78,7 @@ Note: ZED_Rig_Mono is NOT in this scene — it persists from StartScreen via Don
 ### Runtime-Attached Components
 
 When body tracking is active, `GameScreenManager` attaches at runtime:
+
 - **BodyTrackingInput** on Player1 and/or Player2 (depending on assignments)
 - **TrackingLostIndicator** child on each tracked player (world-space canvas with red "X TRACKING LOST" text + countdown)
 
@@ -84,11 +86,11 @@ When body tracking is active, `GameScreenManager` attaches at runtime:
 
 ## Layers
 
-| Index | Name    | Purpose                                    |
-|-------|---------|------------------------------------------|
-| 0     | Default | Floors, walls, doors, general objects     |
+| Index | Name    | Purpose                                       |
+| ----- | ------- | --------------------------------------------- |
+| 0     | Default | Floors, walls, doors, general objects         |
 | 8     | Ground  | Floor/wall colliders (used by ground raycast) |
-| 9     | Player  | Player capsules (self-collision disabled)  |
+| 9     | Player  | Player capsules (self-collision disabled)     |
 
 ## Runtime-Generated Objects
 
@@ -110,21 +112,22 @@ GameManager/
 ```
 
 Each door is a Cube primitive with:
+
 - Scale: (1.0, 1.4, 0.4)
 - BoxCollider set to trigger, size (1.5, 1.5, 3.0)
 - PortalDoor component with paired reference and color
 
 ## Player Configuration
 
-| Property       | Player 1         | Player 2              |
-|----------------|------------------|-----------------------|
-| playerNumber   | 1                | 2                     |
-| leftKey        | A                | LeftArrow             |
-| rightKey       | D                | RightArrow            |
-| jumpKey        | W                | UpArrow               |
-| groundLayer    | Ground (Layer 8) | Ground (Layer 8)      |
-| useBodyTracking| false (set at runtime by GameScreenManager) | same |
-| Rigidbody      | Constraints: FreezeZ + FreezeRotation, Interpolate, Continuous CD |
+| Property        | Player 1                                                          | Player 2         |
+| --------------- | ----------------------------------------------------------------- | ---------------- |
+| playerNumber    | 1                                                                 | 2                |
+| leftKey         | A                                                                 | LeftArrow        |
+| rightKey        | D                                                                 | RightArrow       |
+| jumpKey         | W                                                                 | UpArrow          |
+| groundLayer     | Ground (Layer 8)                                                  | Ground (Layer 8) |
+| useBodyTracking | false (set at runtime by GameScreenManager)                       | same             |
+| Rigidbody       | Constraints: FreezeZ + FreezeRotation, Interpolate, Continuous CD |
 
 ## Camera
 

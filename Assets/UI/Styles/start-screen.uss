@@ -1,0 +1,44 @@
+/* StartScreen layout */
+
+#start-root {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--nes-black);
+}
+
+#title-text {
+    color: var(--nes-gold);
+    -unity-text-align: middle-center;
+    margin-bottom: 40px;
+}
+
+#prompt-text {
+    color: var(--nes-white);
+    -unity-text-align: middle-center;
+    margin-bottom: 20px;
+}
+
+#countdown-text {
+    color: var(--nes-red);
+    -unity-text-align: middle-center;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+#status-bar {
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    right: 32px;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#p1-status {
+    color: var(--nes-green);
+}
+
+#p2-status {
+    color: var(--nes-blue);
+}
