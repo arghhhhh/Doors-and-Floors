@@ -1,0 +1,17 @@
+<UXML xmlns="UnityEngine.UIElements" xmlns:appui="Unity.AppUI.UI">
+    <Style src="../Styles/nes-theme.uss" />
+    <Style src="../Styles/game-screen.uss" />
+    <appui:Panel name="game-root" picking-mode="Ignore">
+        <appui:Heading name="timer-text" text="00:00:00" size="L" picking-mode="Ignore" />
+        <VisualElement name="win-panel" class="nes-hidden">
+            <VisualElement name="win-panel-inner">
+                <appui:Heading name="winner-text" text="" size="XL" />
+                <VisualElement name="winner-photo" class="nes-hidden" />
+                <appui:Heading name="final-time-text" text="" size="M" />
+                <appui:Text name="high-score-label" text="" size="L" />
+                <VisualElement name="high-score-list" />
+                <appui:Text name="instructions-text" text="" size="S" />
+            </VisualElement>
+        </VisualElement>
+    </appui:Panel>
+</UXML>

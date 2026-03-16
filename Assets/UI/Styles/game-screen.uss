@@ -1,0 +1,91 @@
+/* GameScreen layout */
+
+#game-root {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+#timer-text {
+    color: var(--nes-white);
+    -unity-text-align: middle-center;
+    position: absolute;
+    top: 16px;
+    left: 0;
+    right: 0;
+}
+
+#win-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(12, 12, 12, 0.85);
+}
+
+#win-panel-inner {
+    border-width: 4px;
+    border-color: var(--nes-white);
+    background-color: var(--nes-black);
+    padding: 32px;
+    min-width: 500px;
+    align-items: center;
+}
+
+#winner-text {
+    color: var(--nes-gold);
+    -unity-text-align: middle-center;
+    margin-bottom: 16px;
+}
+
+#winner-photo {
+    width: 128px;
+    height: 128px;
+    border-width: 3px;
+    border-color: var(--nes-gold);
+    margin-bottom: 16px;
+}
+
+#final-time-text {
+    color: var(--nes-white);
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+}
+
+#high-score-label {
+    color: var(--nes-red);
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+}
+
+#high-score-list {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.score-entry {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 4px;
+}
+
+.score-photo {
+    width: 32px;
+    height: 32px;
+    border-width: 2px;
+    border-color: var(--nes-white);
+    margin-right: 8px;
+}
+
+.score-text {
+    color: var(--nes-white);
+}
+
+#instructions-text {
+    color: var(--nes-gray);
+    -unity-text-align: middle-center;
+    margin-top: 8px;
+}

@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
+using Unity.AppUI.UI;
 using sl;
 
 /// <summary>
@@ -18,12 +19,6 @@ public class StartScreenManager : MonoBehaviour
         WaitingForP2Confirm,
         Launching
     }
-
-    [Header("UI References")]
-    public Text titleText;
-    public Text p1StatusText;
-    public Text p2StatusText;
-    public Text countdownText;
 
     [Header("Timing")]
     [Tooltip("How long the field goal gesture must be held to confirm")]
@@ -43,6 +38,16 @@ public class StartScreenManager : MonoBehaviour
     ZEDTrackingProvider trackingProvider;
     Camera zedCamera;
 
+    // UI Toolkit elements
+    Heading titleEl;
+    Unity.AppUI.UI.Text promptEl;
+    Unity.AppUI.UI.Text countdownEl;
+    Unity.AppUI.UI.Text p1StatusEl;
+    Unity.AppUI.UI.Text p2StatusEl;
+
+    // Blink state
+    bool promptVisible = true;
+
     // P1 candidate tracking
     int p1CandidateBodyId = -1;
     float p1GestureHoldTime;
@@ -59,26 +64,26 @@ public class StartScreenManager : MonoBehaviour
         if (trackingProvider != null)
             trackingProvider.ClearAllAssignments();
 
-        // Auto-find UI references by name if not assigned in inspector
-        if (titleText == null)
+        // Query UI Toolkit elements from UIDocument
+        var uiDoc = GetComponent<UIDocument>();
+        if (uiDoc != null)
         {
-            var go = GameObject.Find("TitleText");
-            if (go != null) titleText = go.GetComponent<Text>();
-        }
-        if (p1StatusText == null)
-        {
-            var go = GameObject.Find("P1StatusText");
-            if (go != null) p1StatusText = go.GetComponent<Text>();
-        }
-        if (p2StatusText == null)
-        {
-            var go = GameObject.Find("P2StatusText");
-            if (go != null) p2StatusText = go.GetComponent<Text>();
-        }
-        if (countdownText == null)
-        {
-            var go = GameObject.Find("CountdownText");
-            if (go != null) countdownText = go.GetComponent<Text>();
+            var root = uiDoc.rootVisualElement;
+            titleEl = root.Q<Heading>("title-text");
+            promptEl = root.Q<Unity.AppUI.UI.Text>("prompt-text");
+            countdownEl = root.Q<Unity.AppUI.UI.Text>("countdown-text");
+            p1StatusEl = root.Q<Unity.AppUI.UI.Text>("p1-status");
+            p2StatusEl = root.Q<Unity.AppUI.UI.Text>("p2-status");
+
+            // Blink the prompt text
+            if (promptEl != null)
+            {
+                promptEl.schedule.Execute(() =>
+                {
+                    promptVisible = !promptVisible;
+                    promptEl.style.opacity = promptVisible ? 1f : 0f;
+                }).Every(500);
+            }
         }
 
         // Find and configure ZED camera preview
@@ -282,59 +287,59 @@ public class StartScreenManager : MonoBehaviour
 
     void UpdateUI()
     {
-        if (titleText != null)
-            titleText.text = "ZED GAMES";
+        if (titleEl != null)
+            titleEl.text = "DOORS & FLOORS";
 
-        if (p1StatusText != null)
+        if (p1StatusEl != null)
         {
             switch (CurrentState)
             {
                 case LobbyState.WaitingForP1Detection:
-                    p1StatusText.text = "P1: Step into view...";
+                    p1StatusEl.text = "P1: Step into view...";
                     break;
                 case LobbyState.WaitingForP1Confirm:
                     float p1Progress = Mathf.Clamp01(p1GestureHoldTime / confirmHoldDuration);
-                    p1StatusText.text = $"P1: Raise arms to confirm! [{p1Progress:P0}]";
+                    p1StatusEl.text = $"P1: Raise arms to confirm! [{p1Progress:P0}]";
                     break;
                 default:
-                    p1StatusText.text = "P1: Ready!";
+                    p1StatusEl.text = "P1: Ready!";
                     break;
             }
         }
 
-        if (p2StatusText != null)
+        if (p2StatusEl != null)
         {
             switch (CurrentState)
             {
                 case LobbyState.WaitingForP1Detection:
                 case LobbyState.WaitingForP1Confirm:
-                    p2StatusText.text = "";
+                    p2StatusEl.text = "";
                     break;
                 case LobbyState.WaitingForP2:
-                    p2StatusText.text = "P2: Step into view...";
+                    p2StatusEl.text = "P2: Step into view...";
                     break;
                 case LobbyState.WaitingForP2Confirm:
                     float p2Progress = Mathf.Clamp01(p2GestureHoldTime / confirmHoldDuration);
-                    p2StatusText.text = $"P2: Raise arms to confirm! [{p2Progress:P0}]";
+                    p2StatusEl.text = $"P2: Raise arms to confirm! [{p2Progress:P0}]";
                     break;
                 default:
-                    p2StatusText.text = trackingProvider != null && trackingProvider.IsPlayerAssigned(2)
+                    p2StatusEl.text = trackingProvider != null && trackingProvider.IsPlayerAssigned(2)
                         ? "P2: Ready!"
                         : "P2: ---";
                     break;
             }
         }
 
-        if (countdownText != null)
+        if (countdownEl != null)
         {
             if (CurrentState == LobbyState.WaitingForP2 || CurrentState == LobbyState.WaitingForP2Confirm)
             {
-                countdownText.text = $"Starting in {Mathf.CeilToInt(p2Countdown)}s";
-                countdownText.gameObject.SetActive(true);
+                countdownEl.text = $"Starting in {Mathf.CeilToInt(p2Countdown)}s";
+                countdownEl.style.display = DisplayStyle.Flex;
             }
             else
             {
-                countdownText.gameObject.SetActive(false);
+                countdownEl.style.display = DisplayStyle.None;
             }
         }
     }
