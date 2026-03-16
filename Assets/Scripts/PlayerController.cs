@@ -20,12 +20,14 @@ public class PlayerController : MonoBehaviour
     public int playerNumber = 1;
     public Texture2D profilePhoto;
 
-    Rigidbody rb;
+    [HideInInspector] public Rigidbody rb;
     bool isGrounded;
     public bool IsGrounded => isGrounded;
     CapsuleCollider capsule;
     Renderer playerRenderer;
     bool frozen;
+    public bool IsFrozen => frozen;
+    [HideInInspector] public bool useBodyTracking = false;
     bool teleportedThisJump;
     bool hasLandedSinceReset;
     public bool CanTeleport => !teleportedThisJump && hasLandedSinceReset;
@@ -86,15 +88,19 @@ public class PlayerController : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
-        float moveX = 0f;
-        if (Input.GetKey(leftKey)) moveX -= 1f;
-        if (Input.GetKey(rightKey)) moveX += 1f;
-
-        rb.velocity = new Vector3(moveX * moveSpeed, rb.velocity.y, 0f);
-
-        if (Input.GetKeyDown(jumpKey) && isGrounded)
+        // Body tracking input is handled by BodyTrackingInput component
+        if (!useBodyTracking)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            float moveX = 0f;
+            if (Input.GetKey(leftKey)) moveX -= 1f;
+            if (Input.GetKey(rightKey)) moveX += 1f;
+
+            rb.velocity = new Vector3(moveX * moveSpeed, rb.velocity.y, 0f);
+
+            if (Input.GetKeyDown(jumpKey) && isGrounded)
+            {
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            }
         }
 
         // Clamp Z position (slightly in front of doors so player renders on top)

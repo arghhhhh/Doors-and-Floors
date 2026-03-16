@@ -142,7 +142,7 @@ public class GameManager : MonoBehaviour
         CurrentState = GameState.Playing;
     }
 
-    Vector3 GetSpawnPosition(int playerNumber)
+    public Vector3 GetSpawnPosition(int playerNumber)
     {
         GameObject f0 = GameObject.Find("Floor_0");
         float spawnY = f0 != null ? f0.transform.position.y + f0.transform.localScale.y * 0.5f + 0.35f : 1f;
