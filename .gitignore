@@ -111,4 +111,7 @@ InitTestScene*.unity*
 /Packages/com.unity.dt.app-ui*/
 
 # Claude Code local settings
-.claude/
+.claude/*
+!.claude/agents/
+.claude/agents/*
+!.claude/agents/unity.md
