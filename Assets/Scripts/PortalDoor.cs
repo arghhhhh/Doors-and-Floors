@@ -7,6 +7,16 @@ public class PortalDoor : MonoBehaviour
     public float cooldownTime = 0.5f;
     public float teleportYOffset = -0.5f; // Appear at the door, then fall naturally
 
+    // Per-door spiral parameters (set by DoorPairGenerator before Start)
+    [HideInInspector] public float spiralSpeed = 1.0f;
+    [HideInInspector] public float spiralArms = 6.0f;
+    [HideInInspector] public float spiralRings = 5.0f;
+    [HideInInspector] public float spiralBands = 10.0f;
+    [HideInInspector] public float spiralAngle = 1.0472f;
+    [HideInInspector] public float spiralBrightness = 1.3f;
+
+    static Material sharedSpiralMaterial;
+
     float lastTeleportTime = -1f;
     Renderer doorRenderer;
 
@@ -17,11 +27,32 @@ public class PortalDoor : MonoBehaviour
 
     void Start()
     {
-        if (doorRenderer != null)
+        ApplySpiralMaterial();
+    }
+
+    void ApplySpiralMaterial()
+    {
+        if (doorRenderer == null) return;
+
+        // Load and cache the spiral shader once
+        if (sharedSpiralMaterial == null)
         {
-            MaterialPropertyBlock block = new MaterialPropertyBlock();
-            block.SetColor("_BaseColor", doorColor);
-            doorRenderer.SetPropertyBlock(block);
+            Shader spiralShader = Shader.Find("ZedGames/PortalSpiral");
+            if (spiralShader != null)
+                sharedSpiralMaterial = new Material(spiralShader);
+        }
+
+        if (sharedSpiralMaterial != null)
+        {
+            Material mat = new Material(sharedSpiralMaterial);
+            mat.SetColor("_BaseColor", doorColor);
+            mat.SetFloat("_Speed", spiralSpeed);
+            mat.SetFloat("_NumArms", spiralArms);
+            mat.SetFloat("_NumRings", spiralRings);
+            mat.SetFloat("_NumBands", spiralBands);
+            mat.SetFloat("_SpiralAngle", spiralAngle);
+            mat.SetFloat("_Brightness", spiralBrightness);
+            doorRenderer.material = mat;
         }
     }
 
@@ -55,11 +86,10 @@ public class PortalDoor : MonoBehaviour
     public void SetColor(Color color)
     {
         doorColor = color;
-        if (doorRenderer != null)
+        if (doorRenderer != null && doorRenderer.material != null
+            && doorRenderer.material.HasProperty("_BaseColor"))
         {
-            MaterialPropertyBlock block = new MaterialPropertyBlock();
-            block.SetColor("_BaseColor", color);
-            doorRenderer.SetPropertyBlock(block);
+            doorRenderer.material.SetColor("_BaseColor", color);
         }
     }
 }

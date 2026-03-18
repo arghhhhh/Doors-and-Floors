@@ -8,6 +8,8 @@ using sl;
 /// </summary>
 public class BodyTrackingInput : MonoBehaviour
 {
+    public enum JumpMethod { PhysicalJump, FieldGoalGesture }
+
     [Header("Player")]
     public int playerNumber = 1;
 
@@ -22,10 +24,16 @@ public class BodyTrackingInput : MonoBehaviour
     public float gameXMax = 6.5f;
     [Tooltip("Speed multiplier for tracking-based movement")]
     public float xTrackingSpeed = 10f;
+    [Tooltip("Mirror the X axis so left/right matches the player's perspective")]
+    public bool mirrorX = true;
 
     [Header("Jump")]
+    [Tooltip("How to detect a jump")]
+    public JumpMethod jumpMethod = JumpMethod.PhysicalJump;
     [Tooltip("Cooldown between jumps in seconds")]
     public float jumpCooldown = 0.5f;
+    [Tooltip("Height (meters) pelvis must rise above baseline to trigger a physical jump")]
+    public float physicalJumpThreshold = 0.12f;
 
     [Header("Tracking Loss")]
     [Tooltip("Grace period before showing lost indicator")]
@@ -46,6 +54,11 @@ public class BodyTrackingInput : MonoBehaviour
     // Jump state
     bool wasGestureActive;
     float jumpCooldownTimer;
+
+    // Physical jump detection state
+    float baselinePelvisY = float.NegativeInfinity;
+    bool wasPhysicalJumpDetected;
+    const float baselineRiseSpeed = 0.3f; // m/s — how fast baseline follows pelvis upward
 
     // Tracking loss state
     float searchingTimer;
@@ -69,6 +82,8 @@ public class BodyTrackingInput : MonoBehaviour
         searchingTimer = 0f;
         lostTimer = 0f;
         wasGestureActive = false;
+        wasPhysicalJumpDetected = false;
+        baselinePelvisY = float.NegativeInfinity;
         jumpCooldownTimer = 0f;
 
         if (trackingLostIndicator != null)
@@ -155,19 +170,62 @@ public class BodyTrackingInput : MonoBehaviour
         DetectedBody body = trackingProvider.GetBodyForPlayer(playerNumber);
         if (body == null) return;
 
-        // X Movement — pelvis-based
+        // X Movement — pelvis-based, mirrored so player's left/right matches in-game
         Vector3 pelvisWorld = trackingProvider.GetKeypointWorld(body, (int)BODY_38_PARTS.PELVIS);
         if (float.IsFinite(pelvisWorld.x))
         {
             float normalizedX = Mathf.InverseLerp(physicalXMin, physicalXMax, pelvisWorld.x);
-            float targetX = Mathf.Lerp(gameXMin, gameXMax, normalizedX);
+            if (mirrorX)
+                normalizedX = 1f - normalizedX;
+            float targetX = Mathf.Lerp(gameXMin, gameXMax, normalizedX) + playerController.trackingXOffset;
 
             float currentX = transform.position.x;
             float velocityX = (targetX - currentX) * xTrackingSpeed;
             playerController.rb.velocity = new Vector3(velocityX, playerController.rb.velocity.y, 0f);
         }
 
-        // Jump — rising edge of field goal gesture
+        // Jump
+        if (jumpMethod == JumpMethod.PhysicalJump)
+        {
+            ProcessPhysicalJump(pelvisWorld);
+        }
+        else
+        {
+            ProcessFieldGoalJump(body);
+        }
+    }
+
+    void ProcessPhysicalJump(Vector3 pelvisWorld)
+    {
+        if (!float.IsFinite(pelvisWorld.y)) return;
+
+        float pelvisY = pelvisWorld.y;
+
+        // Initialize baseline on first valid reading
+        if (!float.IsFinite(baselinePelvisY))
+            baselinePelvisY = pelvisY;
+
+        // Baseline follows pelvis downward immediately, upward slowly
+        if (pelvisY < baselinePelvisY)
+            baselinePelvisY = pelvisY;
+        else
+            baselinePelvisY = Mathf.MoveTowards(baselinePelvisY, pelvisY, baselineRiseSpeed * Time.deltaTime);
+
+        float heightAboveBaseline = pelvisY - baselinePelvisY;
+        bool isJumping = heightAboveBaseline > physicalJumpThreshold;
+
+        // Rising edge — trigger jump
+        if (isJumping && !wasPhysicalJumpDetected && playerController.IsGrounded && jumpCooldownTimer <= 0f)
+        {
+            playerController.rb.AddForce(Vector3.up * playerController.jumpForce, ForceMode.Impulse);
+            jumpCooldownTimer = jumpCooldown;
+        }
+
+        wasPhysicalJumpDetected = isJumping;
+    }
+
+    void ProcessFieldGoalJump(DetectedBody body)
+    {
         Vector3[] keypoints = GetWorldKeypoints(body);
         float[] confidences = body.rawBodyData.keypointConfidence;
         bool gestureActive = GestureDetector.IsFieldGoalGesture(keypoints, confidences);

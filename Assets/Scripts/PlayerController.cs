@@ -32,6 +32,13 @@ public class PlayerController : MonoBehaviour
     bool hasLandedSinceReset;
     public bool CanTeleport => !teleportedThisJump && hasLandedSinceReset;
     int resetGeneration; // increments on each reset to invalidate pending teleports
+
+    /// <summary>
+    /// Cumulative X offset from teleports, used by BodyTrackingInput to keep
+    /// the character near the portal exit rather than snapping back to the
+    /// tracked body's mapped position.
+    /// </summary>
+    [HideInInspector] public float trackingXOffset;
     GameObject profileQuad;
     Renderer profileRenderer;
 
@@ -127,6 +134,9 @@ public class PlayerController : MonoBehaviour
 
     public void TeleportTo(Vector3 destination)
     {
+        float deltaX = destination.x - transform.position.x;
+        trackingXOffset += deltaX;
+
         rb.isKinematic = true;
         rb.velocity = Vector3.zero;
         transform.position = new Vector3(destination.x, destination.y, -0.3f);
@@ -153,6 +163,8 @@ public class PlayerController : MonoBehaviour
         // Abort if a reset happened during the wait
         if (gen != resetGeneration) yield break;
 
+        float deltaX = destination.x - transform.position.x;
+        trackingXOffset += deltaX;
         transform.position = new Vector3(destination.x, destination.y, -0.3f);
         teleportedThisJump = true;
         SetAllRenderersVisible(true);
@@ -177,6 +189,7 @@ public class PlayerController : MonoBehaviour
         frozen = false;
         teleportedThisJump = false;
         hasLandedSinceReset = false;
+        trackingXOffset = 0f;
         rb.isKinematic = false;
         rb.velocity = Vector3.zero;
         transform.position = new Vector3(spawnPosition.x, spawnPosition.y, -0.3f);

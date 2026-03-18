@@ -179,12 +179,9 @@ public class DoorPairGenerator : MonoBehaviour
                 if (paired[j]) continue;
                 if (Mathf.Abs(unpaired[i].beltIndex - unpaired[j].beltIndex) > maxDistance) continue;
 
-                Color c = doorColors[colorIndex % doorColors.Length];
                 unpaired[i].door.pairedDoor = unpaired[j].door;
                 unpaired[j].door.pairedDoor = unpaired[i].door;
-                unpaired[i].door.SetColor(c);
-                unpaired[j].door.SetColor(c);
-                colorIndex++;
+                ApplyPairVisuals(unpaired[i].door, unpaired[j].door, ref colorIndex);
                 paired[i] = true;
                 paired[j] = true;
                 break;
@@ -212,12 +209,42 @@ public class DoorPairGenerator : MonoBehaviour
 
         if (doorA == null || doorB == null) return;
 
-        Color c = doorColors[colorIndex % doorColors.Length];
         doorA.pairedDoor = doorB;
         doorB.pairedDoor = doorA;
-        doorA.SetColor(c);
-        doorB.SetColor(c);
+        ApplyPairVisuals(doorA, doorB, ref colorIndex);
+    }
+
+    void ApplyPairVisuals(PortalDoor doorA, PortalDoor doorB, ref int colorIndex)
+    {
+        Color c = doorColors[colorIndex % doorColors.Length];
         colorIndex++;
+
+        // Randomize spiral parameters — same for both doors in the pair
+        float speed       = Random.Range(0.5f, 2.0f);
+        float arms        = Mathf.Round(Random.Range(3f, 10f));
+        float rings       = Mathf.Round(Random.Range(3f, 8f));
+        float bands       = Mathf.Round(Random.Range(5f, 15f));
+        float angle       = Random.Range(0.5f, 2.6f); // ~30° to ~150°
+        float brightness  = Random.Range(1.1f, 1.5f);
+
+        // Randomly flip spin direction per pair
+        if (Random.value > 0.5f)
+            speed = -speed;
+
+        SetDoorSpiralParams(doorA, c, speed, arms, rings, bands, angle, brightness);
+        SetDoorSpiralParams(doorB, c, speed, arms, rings, bands, angle, brightness);
+    }
+
+    void SetDoorSpiralParams(PortalDoor door, Color color, float speed, float arms,
+        float rings, float bands, float angle, float brightness)
+    {
+        door.doorColor = color;
+        door.spiralSpeed = speed;
+        door.spiralArms = arms;
+        door.spiralRings = rings;
+        door.spiralBands = bands;
+        door.spiralAngle = angle;
+        door.spiralBrightness = brightness;
     }
 
     PortalDoor GetRandomUnpaired(List<PortalDoor> doors)

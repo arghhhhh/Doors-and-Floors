@@ -341,7 +341,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   confirmHoldDuration: 1
   p2CountdownDuration: 10
-  showCameraPreview: 1
+  showCameraPreview: 0
   gameSceneName: GameScreen
 --- !u!4 &1329402188
 Transform:
