@@ -34,28 +34,25 @@
     font-size: 24px;
 }
 
-/* Player status: absolutely positioned on left and right flanks,
-   vertically centered so they sit beside the video quad */
+/* Player status: positioned below each video quad */
 #p1-status {
     position: absolute;
-    left: 32px;
-    top: 50%;
-    translate: 0 -50%;
+    left: 0;
+    width: 50%;
+    bottom: 60px;
     color: var(--nes-green);
-    font-size: 40px;
-    -unity-text-align: middle-left;
-    white-space: normal;
-    max-width: 200px;
+    font-size: 24px;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
 }
 
 #p2-status {
     position: absolute;
-    right: 32px;
-    top: 50%;
-    translate: 0 -50%;
+    right: 0;
+    width: 50%;
+    bottom: 60px;
     color: var(--nes-blue);
-    font-size: 40px;
-    -unity-text-align: middle-right;
-    white-space: normal;
-    max-width: 200px;
+    font-size: 24px;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
 }

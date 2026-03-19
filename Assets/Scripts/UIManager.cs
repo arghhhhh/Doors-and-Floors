@@ -288,7 +288,15 @@ public class UIManager : MonoBehaviour
         BuildHighScoreList();
 
         if (instructionsEl != null)
+        {
             instructionsEl.text = "Raise hands to play again";
+            bool visible = true;
+            instructionsEl.schedule.Execute(() =>
+            {
+                visible = !visible;
+                instructionsEl.style.opacity = visible ? 1f : 0f;
+            }).Every(750);
+        }
 
         // Start countdown
         winCountdown = winCountdownDuration;
@@ -310,54 +318,38 @@ public class UIManager : MonoBehaviour
         {
             VisualElement entry;
 
-            if (highScoreEntryTemplate != null)
-            {
-                entry = highScoreEntryTemplate.Instantiate();
-            }
-            else
-            {
-                // Fallback: create elements manually
-                entry = new VisualElement();
-                entry.name = "score-entry";
-                entry.AddToClassList("score-entry");
+            entry = new VisualElement();
+            entry.name = "score-entry";
+            entry.AddToClassList("score-entry");
 
-                var photo = new VisualElement();
-                photo.name = "score-photo";
-                photo.AddToClassList("score-photo");
-                entry.Add(photo);
+            var rank = new Label();
+            rank.name = "score-rank";
+            rank.AddToClassList("score-rank");
+            entry.Add(rank);
 
-                var text = new Label();
-                text.name = "score-text";
-                text.AddToClassList("score-text");
-                entry.Add(text);
-            }
+            var photo = new VisualElement();
+            photo.name = "score-photo";
+            photo.AddToClassList("score-photo");
+            entry.Add(photo);
+
+            var time = new Label();
+            time.name = "score-time";
+            time.AddToClassList("score-time");
+            entry.Add(time);
+
+            // Set rank
+            rank.text = $"#{i + 1}";
 
             // Set photo
             Texture2D photo2d = HighScoreManager.Instance.LoadProfilePhoto(scores[i]);
-            var photoEl = entry.Q<VisualElement>("score-photo");
-            if (photoEl != null && photo2d != null)
-            {
-                photoEl.style.backgroundImage = new StyleBackground(photo2d);
-            }
+            if (photo != null && photo2d != null)
+                photo.style.backgroundImage = new StyleBackground(photo2d);
 
-            // Set text (App UI Text inherits LocalizedTextElement, not TextElement)
+            // Set time
             int m = (int)(scores[i].time / 60f);
             int s = (int)(scores[i].time % 60f);
             int ms = (int)((scores[i].time * 100f) % 100f);
-            string timeStr = $"#{i + 1}\n{m:00}:{s:00}:{ms:00}";
-
-            var appuiTextEl = entry.Q<Unity.AppUI.UI.Text>("score-text");
-            if (appuiTextEl != null)
-            {
-                appuiTextEl.text = timeStr;
-            }
-            else
-            {
-                // Fallback for manually created Label
-                var labelEl = entry.Q<Label>("score-text");
-                if (labelEl != null)
-                    labelEl.text = timeStr;
-            }
+            time.text = $"{m:00}:{s:00}:{ms:00}";
 
             highScoreListEl.Add(entry);
         }

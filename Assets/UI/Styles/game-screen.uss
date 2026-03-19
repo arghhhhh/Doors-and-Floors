@@ -99,8 +99,8 @@
     border-width: 4px;
     border-color: var(--nes-white);
     background-color: var(--nes-black);
-    padding: 32px;
-    min-width: 500px;
+    padding: 40px 48px;
+    min-width: 600px;
     align-items: center;
 }
 
@@ -115,7 +115,7 @@
     height: 128px;
     border-width: 3px;
     border-color: var(--nes-gold);
-    margin-bottom: 16px;
+    margin-bottom: 24px;
 }
 
 #final-time-text {
@@ -127,7 +127,7 @@
 #high-score-label {
     color: var(--nes-red);
     -unity-text-align: middle-center;
-    margin-bottom: 12px;
+    margin-bottom: 20px;
 }
 
 #high-score-list {
@@ -135,14 +135,21 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .score-entry {
     flex-direction: column;
     align-items: center;
-    width: 80px;
-    margin: 4px 6px;
+    width: 90px;
+    margin: 6px 8px;
+}
+
+.score-rank {
+    color: var(--nes-gold);
+    -unity-text-align: middle-center;
+    font-size: 16px;
+    margin-bottom: 4px;
 }
 
 .score-photo {
@@ -153,17 +160,17 @@
     margin-bottom: 4px;
 }
 
-.score-text {
+.score-time {
     color: var(--nes-white);
     -unity-text-align: middle-center;
-    font-size: 8px;
+    font-size: 9px;
 }
 
 #restart-row {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    margin-top: 8px;
+    margin-top: 16px;
 }
 
 #gesture-icon {
@@ -184,5 +191,5 @@
 #countdown-text {
     color: var(--nes-gold);
     -unity-text-align: middle-center;
-    margin-top: 8px;
+    margin-top: 16px;
 }

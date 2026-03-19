@@ -544,8 +544,7 @@ public class StartScreenManager : MonoBehaviour
                     p1StatusEl.text = "P1: Step into view...";
                     break;
                 case LobbyState.WaitingForP1Confirm:
-                    float p1Progress = Mathf.Clamp01(p1GestureHoldTime / confirmHoldDuration);
-                    p1StatusEl.text = $"P1: Raise arms to confirm! [{p1Progress:P0}]";
+                    p1StatusEl.text = "P1: Raise arms to confirm!";
                     break;
                 default:
                     p1StatusEl.text = "P1: Ready!";
@@ -559,14 +558,11 @@ public class StartScreenManager : MonoBehaviour
             {
                 case LobbyState.WaitingForP1Detection:
                 case LobbyState.WaitingForP1Confirm:
-                    p2StatusEl.text = "";
-                    break;
                 case LobbyState.WaitingForP2:
                     p2StatusEl.text = "P2: Step into view...";
                     break;
                 case LobbyState.WaitingForP2Confirm:
-                    float p2Progress = Mathf.Clamp01(p2GestureHoldTime / confirmHoldDuration);
-                    p2StatusEl.text = $"P2: Raise arms to confirm! [{p2Progress:P0}]";
+                    p2StatusEl.text = "P2: Raise arms to confirm!";
                     break;
                 default:
                     p2StatusEl.text = trackingProvider != null && trackingProvider.IsPlayerAssigned(2)
