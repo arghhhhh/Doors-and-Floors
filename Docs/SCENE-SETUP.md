@@ -7,6 +7,7 @@
 ```
 Main Camera          Perspective, default settings
 Directional Light    Default scene lighting
+VideoQuad            Quad (8×4.5), VideoPlayer loops hands_up_gesture.mp4, URP Unlit mat
 ZED_Rig_Mono         Prefab instance (DontDestroyOnLoad)
   ├── ZEDManager       Camera connection, body tracking, bodyFormat=BODY_38
   ├── ZEDTrackingProvider  Singleton, player-body assignments

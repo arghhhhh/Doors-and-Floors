@@ -2,12 +2,12 @@
     <Style src="../Styles/nes-theme.uss" />
     <Style src="../Styles/start-screen.uss" />
     <appui:Panel name="start-root">
-        <appui:Heading name="title-text" text="DOORS &amp; FLOORS" size="XXL" />
-        <appui:Text name="prompt-text" text="&gt;&gt; PRESS START &lt;&lt;" size="L" />
-        <appui:Text name="countdown-text" text="" size="XL" class="nes-hidden" />
-        <VisualElement name="status-bar">
-            <appui:Text name="p1-status" text="" size="M" />
-            <appui:Text name="p2-status" text="" size="M" />
+        <VisualElement name="center-column">
+            <appui:Heading name="title-text" text="DOORS &amp; FLOORS" size="XXL" />
+            <appui:Text name="prompt-text" text="&gt;&gt; RACE TO THE TOP &lt;&lt;" size="L" />
+            <appui:Text name="countdown-text" text="" size="XL" class="nes-hidden" />
         </VisualElement>
+        <appui:Text name="p1-status" text="" size="M" />
+        <appui:Text name="p2-status" text="" size="M" />
     </appui:Panel>
 </UXML>

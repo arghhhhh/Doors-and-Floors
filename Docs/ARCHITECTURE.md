@@ -12,6 +12,9 @@ Assets/
     HazmatManController.controller  # Animator controller for character animations
   Materials/
     FinishLineCheckered.mat         # Checkered pattern material for finish line ribbon
+    VideoQuadMat.mat                # URP Unlit material for StartScreen video quad
+  Media/
+    hands_up_gesture.mp4            # Gesture tutorial video (looped on StartScreen)
   Models/
     FinishLineRibbon.fbx            # Finish line ribbon mesh
     Meshy_AI_hazmat_man_1_biped_separate/  # Hazmat Man character (mesh, animations, textures)

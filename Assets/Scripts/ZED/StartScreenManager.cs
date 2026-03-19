@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
+using UnityEngine.Video;
 using Unity.AppUI.UI;
 using sl;
 
@@ -25,6 +26,21 @@ public class StartScreenManager : MonoBehaviour
     public float confirmHoldDuration = 1.0f;
     [Tooltip("Countdown duration for P2 after P1 confirms")]
     public float p2CountdownDuration = 10f;
+
+    [Header("Video Quads")]
+    [Tooltip("P1 video quad (left side)")]
+    public GameObject p1VideoQuad;
+    [Tooltip("P2 video quad (right side)")]
+    public GameObject p2VideoQuad;
+    [Tooltip("Static image for idle state (arms down)")]
+    public Texture2D frameFirst;
+    [Tooltip("Static image for confirmed state (arms up)")]
+    public Texture2D frameLast;
+    [Tooltip("Hue shift for P2 quad (0.4 = green-ish)")]
+    public float p2HueShift = 0.4f;
+    [Tooltip("Tint brightness when no player is detected (0=black, 1=full)")]
+    [Range(0f, 1f)]
+    public float idleBrightness = 0.7f;
 
     [Header("Debug")]
     [Tooltip("Shows face capture debug UI: preview, sliders, and C-key recapture")]
@@ -56,6 +72,12 @@ public class StartScreenManager : MonoBehaviour
     float debugPadTop = 0.37f;
     float debugPadBottom = -0.24f;
 
+    // Video player references (cached from quads)
+    VideoPlayer p1Video;
+    VideoPlayer p2Video;
+    Renderer p1Renderer;
+    Renderer p2Renderer;
+
     // P1 candidate tracking
     int p1CandidateBodyId = -1;
     float p1GestureHoldTime;
@@ -71,6 +93,8 @@ public class StartScreenManager : MonoBehaviour
         trackingProvider = ZEDTrackingProvider.Instance;
         if (trackingProvider != null)
             trackingProvider.ClearAllAssignments();
+
+        SetupVideoQuads();
 
         // Query UI Toolkit elements from UIDocument
         var uiDoc = GetComponent<UIDocument>();
@@ -139,6 +163,83 @@ public class StartScreenManager : MonoBehaviour
         UpdateUI();
     }
 
+    void SetupVideoQuads()
+    {
+        if (p1VideoQuad != null)
+        {
+            p1Video = p1VideoQuad.GetComponent<VideoPlayer>();
+            p1Renderer = p1VideoQuad.GetComponent<Renderer>();
+        }
+        if (p2VideoQuad != null)
+        {
+            p2Video = p2VideoQuad.GetComponent<VideoPlayer>();
+            p2Renderer = p2VideoQuad.GetComponent<Renderer>();
+
+            // Apply hue shift to P2's material instance
+            if (p2HueShift > 0f)
+            {
+                Shader hueShader = Shader.Find("ZedGames/HueShiftLit");
+                if (hueShader != null)
+                {
+                    Material[] mats = p2Renderer.materials;
+                    for (int i = 0; i < mats.Length; i++)
+                    {
+                        Material clone = new Material(mats[i]);
+                        clone.shader = hueShader;
+                        clone.SetFloat("_HueShift", p2HueShift);
+                        mats[i] = clone;
+                    }
+                    p2Renderer.materials = mats;
+                }
+            }
+        }
+
+        // Both start showing first-frame image, dimmed
+        SetQuadIdle(p1Video, p1Renderer);
+        SetQuadIdle(p2Video, p2Renderer);
+    }
+
+    void SetQuadIdle(VideoPlayer vp, Renderer rend)
+    {
+        if (rend == null) return;
+        if (vp != null) { vp.Stop(); vp.enabled = false; }
+        SetQuadTexture(rend, frameFirst);
+        SetQuadTint(rend, idleBrightness);
+    }
+
+    void SetQuadPlaying(VideoPlayer vp, Renderer rend)
+    {
+        if (rend == null) return;
+        if (vp != null)
+        {
+            vp.enabled = true;
+            vp.isLooping = true;
+            vp.Play();
+        }
+        SetQuadTint(rend, 1f);
+    }
+
+    void SetQuadConfirmed(VideoPlayer vp, Renderer rend)
+    {
+        if (rend == null) return;
+        if (vp != null) { vp.Stop(); vp.enabled = false; }
+        SetQuadTexture(rend, frameLast);
+        SetQuadTint(rend, 1f);
+    }
+
+    void SetQuadTexture(Renderer rend, Texture2D tex)
+    {
+        if (rend == null || tex == null) return;
+        rend.material.SetTexture("_BaseMap", tex);
+    }
+
+    void SetQuadTint(Renderer rend, float brightness)
+    {
+        if (rend == null) return;
+        Color c = new Color(brightness, brightness, brightness, 1f);
+        rend.material.SetColor("_BaseColor", c);
+    }
+
     void HandleWaitingForP1Detection()
     {
         var bodies = trackingProvider.GetAllCurrentBodies();
@@ -149,6 +250,7 @@ public class StartScreenManager : MonoBehaviour
             {
                 p1CandidateBodyId = kvp.Key;
                 p1GestureHoldTime = 0f;
+                SetQuadPlaying(p1Video, p1Renderer);
                 CurrentState = LobbyState.WaitingForP1Confirm;
                 break;
             }
@@ -164,6 +266,7 @@ public class StartScreenManager : MonoBehaviour
         {
             // Lost the candidate — go back to detection
             p1CandidateBodyId = -1;
+            SetQuadIdle(p1Video, p1Renderer);
             CurrentState = LobbyState.WaitingForP1Detection;
             return;
         }
@@ -177,8 +280,9 @@ public class StartScreenManager : MonoBehaviour
             p1GestureHoldTime += Time.deltaTime;
             if (p1GestureHoldTime >= confirmHoldDuration)
             {
-                // P1 confirmed — capture face and assign
+                // P1 confirmed — capture face, freeze video, and assign
                 CapturePlayerFace(1, body);
+                SetQuadConfirmed(p1Video, p1Renderer);
                 trackingProvider.AssignBodyToPlayer(1, p1CandidateBodyId);
                 p2Countdown = p2CountdownDuration;
                 lastUnassignedBodyCount = 0;
@@ -209,6 +313,7 @@ public class StartScreenManager : MonoBehaviour
             // Take first unassigned body as P2 candidate
             p2CandidateBodyId = unassigned[0].id;
             p2GestureHoldTime = 0f;
+            SetQuadPlaying(p2Video, p2Renderer);
             CurrentState = LobbyState.WaitingForP2Confirm;
             lastUnassignedBodyCount = currentUnassigned;
             return;
@@ -233,6 +338,7 @@ public class StartScreenManager : MonoBehaviour
         if (!bodies.ContainsKey(p2CandidateBodyId))
         {
             p2CandidateBodyId = -1;
+            SetQuadIdle(p2Video, p2Renderer);
             CurrentState = LobbyState.WaitingForP2;
             return;
         }
@@ -246,8 +352,9 @@ public class StartScreenManager : MonoBehaviour
             p2GestureHoldTime += Time.deltaTime;
             if (p2GestureHoldTime >= confirmHoldDuration)
             {
-                // P2 confirmed — capture face, assign, and launch
+                // P2 confirmed — capture face, freeze video, assign, and launch
                 CapturePlayerFace(2, body);
+                SetQuadConfirmed(p2Video, p2Renderer);
                 trackingProvider.AssignBodyToPlayer(2, p2CandidateBodyId);
                 LaunchGame();
                 return;
