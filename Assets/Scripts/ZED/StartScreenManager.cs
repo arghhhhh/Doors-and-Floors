@@ -40,7 +40,7 @@ public class StartScreenManager : MonoBehaviour
     public float p2HueShift = 0.4f;
     [Tooltip("Tint brightness when no player is detected (0=black, 1=full)")]
     [Range(0f, 1f)]
-    public float idleBrightness = 0.7f;
+    public float idleBrightness = 0.4f;
 
     [Header("Debug")]
     [Tooltip("Shows face capture debug UI: preview, sliders, and C-key recapture")]
