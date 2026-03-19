@@ -61,7 +61,10 @@ public class GameManager : MonoBehaviour
     void FreezeAllPlayers()
     {
         foreach (var p in FindObjectsOfType<PlayerController>())
+        {
             p.FreezeForWin();
+            p.SetVisible(false);
+        }
     }
 
     void UnfreezeAllPlayers()

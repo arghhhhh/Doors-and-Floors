@@ -43,15 +43,15 @@ Aligned with the BodyTrackingMulti sample scene. Key settings:
 Main Camera          Perspective, FOV 60, position (0, 7.5, -10), solid color bg
 Directional Light    Default scene lighting
 Global Volume        Post-processing (URP)
-Floor_0              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=-0.88
-Floor_1              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=1.62
-Floor_2              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=4.14
-Floor_3              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=6.62
-Floor_4              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=9.12
-Floor_5              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=11.62
-Floor_6              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=14.12  <- Roof (ceiling for last belt)
-Wall_Left            Cube, Layer: Ground(8), X=-7.25, scale (0.5, 16, 1)
-Wall_Right           Cube, Layer: Ground(8), X=+7.25, scale (0.5, 16, 1)
+Floor_0              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=-0.88, Bricks mat
+Floor_1              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=1.62, Bricks mat
+Floor_2              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=4.14, Bricks mat
+Floor_3              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=6.62, Bricks mat
+Floor_4              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=9.12, Bricks mat
+Floor_5              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=11.62, Bricks mat
+Floor_6              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=14.12, Bricks mat  <- Roof
+Wall_Left            Cube, Layer: Ground(8), X=-7.25, scale (0.5, 16, 1), Bricks mat
+Wall_Right           Cube, Layer: Ground(8), X=+7.25, scale (0.5, 16, 1), Bricks mat
 Player1              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController
 Player2              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController
 GameManager          Empty, GameManager + DoorPairGenerator + HighScoreManager
@@ -131,6 +131,16 @@ Each door is a Cube primitive with:
 - Position: (0, 7.5, -10)
 - Covers all 7 floors (0 through 6) within the view
 - Solid color background
+
+## Materials
+
+| Material | Shader | Texture | Notes |
+| -------- | ------ | ------- | ----- |
+| Bricks (`Assets/Materials/Bricks.mat`) | `ZedGames/WorldSpaceUnlit` | `Assets/Media/bricks.jpg` | World-space XY UVs so all floors/walls tile seamlessly as one surface. Tiling (2,2). |
+
+The `WorldSpaceUnlit` shader (`Assets/Shaders/WorldSpaceUnlit.shader`) projects the texture using world-space XY coordinates instead of mesh UVs. This makes separate cubes appear as a single continuous surface. Parameters: `_Tiling` (Vector2), `_Offset` (Vector2).
+
+Editor utility: `Tools > ZedGames > Setup Bricks Material` re-creates the material and bulk-applies it.
 
 ## UI System
 

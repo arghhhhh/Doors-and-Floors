@@ -6,14 +6,16 @@
         <VisualElement name="tutorial-panel" class="nes-hidden">
             <VisualElement name="tutorial-inner">
                 <appui:Heading name="tutorial-title" text="How to Play" size="L" />
+                <appui:Text name="tutorial-subtitle" text="Your body = the controller" size="M" />
+                <appui:Text name="tutorial-objective" text="Objective - cross the finish line" size="M" />
                 <VisualElement name="tutorial-clips">
                     <VisualElement name="tutorial-clip-left" class="tutorial-clip">
                         <VisualElement name="tutorial-video-run" class="tutorial-video" />
-                        <appui:Text name="tutorial-text-run" text="Move horizontally to move your character" size="S" />
+                        <appui:Text name="tutorial-text-run" text="Move sideways to run" size="S" />
                     </VisualElement>
                     <VisualElement name="tutorial-clip-right" class="tutorial-clip">
                         <VisualElement name="tutorial-video-jump" class="tutorial-video" />
-                        <appui:Text name="tutorial-text-jump" text="Jump to make your character jump" size="S" />
+                        <appui:Text name="tutorial-text-jump" text="Jump to jump" size="S" />
                     </VisualElement>
                 </VisualElement>
                 <appui:Text name="tutorial-countdown" text="" size="M" />

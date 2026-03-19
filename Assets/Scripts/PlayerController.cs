@@ -315,6 +315,8 @@ public class PlayerController : MonoBehaviour
         SetAllRenderersVisible(true);
     }
 
+    public void SetVisible(bool visible) => SetAllRenderersVisible(visible);
+
     void SetAllRenderersVisible(bool visible)
     {
         if (playerRenderer != null)
