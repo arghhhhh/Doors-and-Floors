@@ -106,9 +106,17 @@ ZED_Rig_Mono (DontDestroyOnLoad, persists across scenes)
 
 - 3D Rigidbody with constraints: Freeze Z position, freeze all rotation
 - Players at Z = -0.3 (in front of doors for rendering)
-- CapsuleCollider on players, BoxCollider triggers on doors
-- Ground detection: downward raycast in FixedUpdate, accounts for transform scale
+- CapsuleCollider on players (center offset to fit character model), BoxCollider triggers on doors
+- Ground detection: downward raycast in FixedUpdate, accounts for both capsule center offset and transform scale
 - Players on Layer 9 ("Player") with self-collision disabled
+
+### Character Model
+
+- Rigged Hazmat Man mesh (Meshy AI) as child GameObject (HazmatManModel) of each player
+- Animator on child with Generic rig, applyRootMotion=false (Rigidbody drives movement)
+- AnimatorController (Assets/Animation/HazmatManController.controller) with Idle/Walk/Run/JumpUp/JumpDown states
+- PlayerController drives animator parameters (Speed, IsGrounded, IsJumping) and rotates child model to face movement direction
+- CapsuleCollider remains on root player GameObject for physics
 
 ### Controls
 

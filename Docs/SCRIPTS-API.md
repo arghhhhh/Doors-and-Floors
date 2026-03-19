@@ -15,7 +15,7 @@ Attached to: Player1, Player2
 | rightKey           | KeyCode    | D       | Move right (keyboard mode only) |
 | jumpKey            | KeyCode    | W       | Jump (keyboard mode only) |
 | playerNumber       | int        | 1       | Player identity (1 or 2) |
-| profilePhoto       | Texture2D  | null    | Square profile photo displayed above capsule |
+| profilePhoto       | Texture2D  | null    | Square profile photo displayed above character |
 
 ### Hidden Fields (set at runtime)
 | Field            | Type | Default | Description |
@@ -38,10 +38,17 @@ Attached to: Player1, Player2
 | FreezeForWin | `()` | Stops all physics, makes visible |
 | ResetPlayer | `(Vector3 spawnPosition)` | Full state reset: kills coroutines, increments generation counter, resets all flags and position |
 
+### Animation
+- Animator found via `GetComponentInChildren<Animator>()` on the HazmatManModel child
+- Drives parameters: `Speed` (float, absolute horizontal input), `IsGrounded` (bool), `VelocityY` (float, vertical Rigidbody velocity)
+- States: Idle (default), Walk (Speed > 0.1), Run (Speed > 0.6), JumpUp (VelocityY > 0.5, airborne), JumpDown (VelocityY < -0.5 or after JumpUp apex)
+- Child model rotated to face movement direction: Y=180 (forward/idle), Y=90 (right), Y=270 (left)
+
 ### Important Internal State
 - `resetGeneration` (int): Incremented on each reset. Coroutines capture this value and abort if it changes during their wait.
 - `hasLandedSinceReset` (bool): Prevents teleports until the player has touched ground after a reset/game start.
 - `frozen` (bool): When true, Update() returns immediately (no movement input processed).
+- `modelTransform` (Transform): Reference to child model transform for facing rotation.
 
 ---
 

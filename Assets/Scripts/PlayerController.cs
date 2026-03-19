@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -25,18 +25,20 @@ public class PlayerController : MonoBehaviour
     public bool IsGrounded => isGrounded;
     CapsuleCollider capsule;
     Renderer playerRenderer;
+    Animator animator;
+    Transform modelTransform;
     bool frozen;
     public bool IsFrozen => frozen;
     [HideInInspector] public bool useBodyTracking = false;
     bool teleportedThisJump;
     bool hasLandedSinceReset;
     public bool CanTeleport => !teleportedThisJump && hasLandedSinceReset;
-    int resetGeneration; // increments on each reset to invalidate pending teleports
+    int resetGeneration;
 
     /// <summary>
     /// Cumulative X offset from teleports, used by BodyTrackingInput to keep
     /// the character near the portal exit rather than snapping back to the
-    /// tracked body's mapped position.
+    /// tracked body mapped position.
     /// </summary>
     [HideInInspector] public float trackingXOffset;
     GameObject profileQuad;
@@ -46,7 +48,10 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         capsule = GetComponent<CapsuleCollider>();
+        // Try root renderer first (capsule placeholder), then fall back to child renderer (character model)
         playerRenderer = GetComponent<Renderer>();
+        animator = GetComponentInChildren<Animator>();
+        if (animator != null) modelTransform = animator.transform;
 
         rb.constraints = RigidbodyConstraints.FreezePositionZ
                        | RigidbodyConstraints.FreezeRotation;
@@ -67,17 +72,13 @@ public class PlayerController : MonoBehaviour
         profileQuad.name = $"ProfilePhoto_P{playerNumber}";
         profileQuad.transform.SetParent(transform);
 
-        // Position on top of the capsule (capsule height is 2 unscaled, so top is at local y=1)
-        // Quad sits just above the top
-        float quadSize = 0.8f; // relative to player scale
+        float quadSize = 0.8f;
         profileQuad.transform.localPosition = new Vector3(0f, 1.2f, -0.1f);
         profileQuad.transform.localScale = new Vector3(quadSize, quadSize, 1f);
 
-        // Remove the collider immediately so it never conflicts with the Rigidbody
         Collider quadCol = profileQuad.GetComponent<Collider>();
         if (quadCol != null) DestroyImmediate(quadCol);
 
-        // Apply the profile photo
         profileRenderer = profileQuad.GetComponent<Renderer>();
         Material mat = new Material(Shader.Find("Unlit/Texture"));
         mat.mainTexture = profilePhoto;
@@ -95,10 +96,11 @@ public class PlayerController : MonoBehaviour
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
+        float moveX = 0f;
+
         // Body tracking input is handled by BodyTrackingInput component
         if (!useBodyTracking)
         {
-            float moveX = 0f;
             if (Input.GetKey(leftKey)) moveX -= 1f;
             if (Input.GetKey(rightKey)) moveX += 1f;
 
@@ -108,6 +110,29 @@ public class PlayerController : MonoBehaviour
             {
                 rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             }
+        }
+        else
+        {
+            moveX = rb.velocity.x / moveSpeed;
+        }
+
+        // Drive animator
+        if (animator != null)
+        {
+            animator.SetFloat("Speed", Mathf.Abs(moveX));
+            animator.SetBool("IsGrounded", isGrounded);
+            animator.SetFloat("VelocityY", rb.velocity.y);
+        }
+
+        // Rotate child model to face movement direction
+        // Y=180 forward (toward camera), Y=90 moving right, Y=270 moving left
+        if (modelTransform != null)
+        {
+            float targetY;
+            if (moveX > 0.1f) targetY = 90f;
+            else if (moveX < -0.1f) targetY = 270f;
+            else targetY = 180f;
+            modelTransform.localRotation = Quaternion.Euler(0f, targetY, 0f);
         }
 
         // Clamp Z position (slightly in front of doors so player renders on top)
@@ -121,8 +146,10 @@ public class PlayerController : MonoBehaviour
 
     void CheckGround()
     {
-        float halfHeight = capsule != null ? capsule.height * 0.5f * transform.lossyScale.y : 0.5f;
-        Vector3 origin = transform.position + Vector3.down * (halfHeight - 0.05f);
+        float scaleY = transform.lossyScale.y;
+        float halfHeight = capsule != null ? capsule.height * 0.5f * scaleY : 0.5f;
+        float centerY = capsule != null ? capsule.center.y * scaleY : 0f;
+        Vector3 origin = transform.position + Vector3.up * (centerY - halfHeight + 0.05f);
         isGrounded = Physics.Raycast(origin, Vector3.down, groundCheckDistance, groundLayer);
 
         if (isGrounded)
@@ -160,7 +187,6 @@ public class PlayerController : MonoBehaviour
 
         yield return new WaitForSeconds(delay);
 
-        // Abort if a reset happened during the wait
         if (gen != resetGeneration) yield break;
 
         float deltaX = destination.x - transform.position.x;
@@ -182,7 +208,6 @@ public class PlayerController : MonoBehaviour
 
     public void ResetPlayer(Vector3 spawnPosition)
     {
-        // Invalidate any in-flight teleport coroutines
         resetGeneration++;
         StopAllCoroutines();
 
@@ -198,8 +223,18 @@ public class PlayerController : MonoBehaviour
 
     void SetAllRenderersVisible(bool visible)
     {
+        // Toggle root renderer if present (capsule placeholder)
         if (playerRenderer != null)
             playerRenderer.enabled = visible;
+
+        // Toggle all child renderers (character model meshes)
+        foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+        {
+            // Skip the profile quad renderer — it is managed separately below
+            if (profileRenderer != null && r == profileRenderer) continue;
+            r.enabled = visible;
+        }
+
         if (profileRenderer != null)
             profileRenderer.enabled = visible;
     }
