@@ -13,6 +13,7 @@ public static class RebuildHazmatController
 {
     const string MODEL_BASE = "Assets/Models/Meshy_AI_hazmat_man_1_biped_separate/Meshy_AI_hazmat_man_1_biped/";
 
+    const string FBX_CHAR    = MODEL_BASE + "Meshy_AI_hazmat_man_1_biped_Character_output.fbx";
     const string FBX_IDLE    = MODEL_BASE + "Meshy_AI_hazmat_man_1_biped_Animation_Idle_02_withSkin.fbx";
     const string FBX_WALK    = MODEL_BASE + "Meshy_AI_hazmat_man_1_biped_Animation_Walking_withSkin.fbx";
     const string FBX_RUN     = MODEL_BASE + "Meshy_AI_hazmat_man_1_biped_Animation_Running_withSkin.fbx";
@@ -25,7 +26,10 @@ public static class RebuildHazmatController
     {
         Debug.Log("[RebuildHazmatController] Starting...");
 
-        // Step 1: Fix FBX import settings
+        // Step 1: Convert character model to Humanoid first (generates the avatar)
+        FixCharacterFbx();
+
+        // Step 2: Fix animation FBX import settings (Humanoid, copy avatar from character)
         FixIdleFbx();
         FixWalkFbx();
         FixRunFbx();
@@ -53,13 +57,43 @@ public static class RebuildHazmatController
     // FBX Import Fixers
     // -------------------------------------------------------------------------
 
+    static void FixCharacterFbx()
+    {
+        var imp = GetImporter(FBX_CHAR);
+        if (imp == null) return;
+
+        imp.animationType = ModelImporterAnimationType.Human;
+        imp.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+        imp.SaveAndReimport();
+        Debug.Log("[RebuildHazmatController] Character FBX set to Humanoid (create avatar from this model)");
+    }
+
+    static void SetupHumanoidAnimation(ModelImporter imp)
+    {
+        imp.animationType = ModelImporterAnimationType.Human;
+        imp.avatarSetup = ModelImporterAvatarSetup.CopyFromOther;
+        imp.sourceAvatar = LoadCharacterAvatar();
+    }
+
+    static Avatar LoadCharacterAvatar()
+    {
+        // Load the avatar generated from the character FBX
+        foreach (var asset in AssetDatabase.LoadAllAssetsAtPath(FBX_CHAR))
+        {
+            if (asset is Avatar avatar)
+                return avatar;
+        }
+        Debug.LogWarning("[RebuildHazmatController] No Avatar found in character FBX. Run this tool again after reimport.");
+        return null;
+    }
+
     static void FixIdleFbx()
     {
         // Idle_02: take "Armature|Armature|Idle_02|baselayer", frames 0-70, LOOP
         var imp = GetImporter(FBX_IDLE);
         if (imp == null) return;
 
-        imp.animationType = ModelImporterAnimationType.Generic;
+        SetupHumanoidAnimation(imp);
 
         var clip = new ModelImporterClipAnimation();
         clip.name       = "idle";
@@ -68,7 +102,9 @@ public static class RebuildHazmatController
         clip.lastFrame  = 70;
         clip.loopTime   = true;
         clip.wrapMode   = WrapMode.Loop;
+        clip.lockRootHeightY = true;
         clip.keepOriginalPositionY = true;
+        clip.heightFromFeet = true;
 
         imp.clipAnimations = new[] { clip };
         imp.SaveAndReimport();
@@ -81,7 +117,7 @@ public static class RebuildHazmatController
         var imp = GetImporter(FBX_WALK);
         if (imp == null) return;
 
-        imp.animationType = ModelImporterAnimationType.Generic;
+        SetupHumanoidAnimation(imp);
 
         var clip = new ModelImporterClipAnimation();
         clip.name       = "walking";
@@ -90,7 +126,9 @@ public static class RebuildHazmatController
         clip.lastFrame  = 31;
         clip.loopTime   = true;
         clip.wrapMode   = WrapMode.Loop;
+        clip.lockRootHeightY = true;
         clip.keepOriginalPositionY = true;
+        clip.heightFromFeet = true;
 
         imp.clipAnimations = new[] { clip };
         imp.SaveAndReimport();
@@ -103,7 +141,7 @@ public static class RebuildHazmatController
         var imp = GetImporter(FBX_RUN);
         if (imp == null) return;
 
-        imp.animationType = ModelImporterAnimationType.Generic;
+        SetupHumanoidAnimation(imp);
 
         var clip = new ModelImporterClipAnimation();
         clip.name       = "running";
@@ -112,6 +150,9 @@ public static class RebuildHazmatController
         clip.lastFrame  = 19;
         clip.loopTime   = true;
         clip.wrapMode   = WrapMode.Loop;
+        clip.lockRootHeightY = true;
+        clip.keepOriginalPositionY = true;
+        clip.heightFromFeet = true;
 
         imp.clipAnimations = new[] { clip };
         imp.SaveAndReimport();
@@ -122,20 +163,24 @@ public static class RebuildHazmatController
     {
         // Regular_Jump: take "Armature|Armature|Regular_Jump|baselayer", frames 0-57
         // Split into:
-        //   JumpUp   : frames 0-22  (no loop)
+        //   JumpUp   : frames 5-22  (no loop, skip pre-jump squat)
         //   JumpDown : frames 23-57 (loop, for extended falling)
+        // Bake Into Pose Y ON + heightFromFeet to match grounded clips
         var imp = GetImporter(FBX_JUMP);
         if (imp == null) return;
 
-        imp.animationType = ModelImporterAnimationType.Generic;
+        SetupHumanoidAnimation(imp);
 
         var jumpUp = new ModelImporterClipAnimation();
         jumpUp.name       = "JumpUp";
         jumpUp.takeName   = "Armature|Armature|Regular_Jump|baselayer";
-        jumpUp.firstFrame = 0;
+        jumpUp.firstFrame = 5;
         jumpUp.lastFrame  = 22;
         jumpUp.loopTime   = false;
         jumpUp.wrapMode   = WrapMode.Once;
+        jumpUp.lockRootHeightY = true;
+        jumpUp.keepOriginalPositionY = true;
+        jumpUp.heightFromFeet = true;
 
         var jumpDown = new ModelImporterClipAnimation();
         jumpDown.name       = "JumpDown";
@@ -144,10 +189,13 @@ public static class RebuildHazmatController
         jumpDown.lastFrame  = 57;
         jumpDown.loopTime   = true;
         jumpDown.wrapMode   = WrapMode.Loop;
+        jumpDown.lockRootHeightY = true;
+        jumpDown.keepOriginalPositionY = true;
+        jumpDown.heightFromFeet = true;
 
         imp.clipAnimations = new[] { jumpUp, jumpDown };
         imp.SaveAndReimport();
-        Debug.Log("[RebuildHazmatController] Fixed Regular_Jump FBX: split into JumpUp(0-22) and JumpDown(23-57)");
+        Debug.Log("[RebuildHazmatController] Fixed Regular_Jump FBX: split into JumpUp(5-22) and JumpDown(23-57)");
     }
 
     // -------------------------------------------------------------------------
@@ -252,7 +300,7 @@ public static class RebuildHazmatController
         // JumpUp -> JumpDown: VelocityY < 0
         var jumpUpToDown = stateJumpUp.AddTransition(stateJumpDown);
         jumpUpToDown.hasExitTime = false;
-        jumpUpToDown.duration    = 0.1f;
+        jumpUpToDown.duration    = 0.15f;
         jumpUpToDown.AddCondition(AnimatorConditionMode.Less, 0f, "VelocityY");
 
         // JumpDown -> Idle: IsGrounded
@@ -307,8 +355,14 @@ public static class RebuildHazmatController
 
         anim.runtimeAnimatorController = controller;
         anim.applyRootMotion = false;
+
+        // Assign the Humanoid avatar from the character FBX
+        var charAvatar = LoadCharacterAvatar();
+        if (charAvatar != null)
+            anim.avatar = charAvatar;
+
         EditorUtility.SetDirty(go);
-        Debug.Log("[RebuildHazmatController] Animator on '" + hazmatModelPath + "' now uses HazmatManController");
+        Debug.Log("[RebuildHazmatController] Animator on '" + hazmatModelPath + "' now uses HazmatManController (Humanoid)");
     }
 
     // -------------------------------------------------------------------------
