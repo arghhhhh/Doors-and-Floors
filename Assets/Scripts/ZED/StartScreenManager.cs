@@ -279,7 +279,7 @@ public class StartScreenManager : MonoBehaviour
         if (vp != null)
         {
             vp.enabled = true;
-            vp.isLooping = true;
+            // vp.isLooping = true;
             vp.Play();
         }
         SetQuadTint(rend, 1f);

@@ -59,6 +59,17 @@ public class GameScreenManager : MonoBehaviour
         if (provider.IsPlayerAssigned(2))
             SetupTrackedPlayer(2, player2Object, provider);
 
+        // If tutorial hasn't been shown yet, GameManager will freeze/hide players.
+        // Re-apply freeze here since SetupTrackedPlayer calls ResetPlayer which makes them visible.
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Tutorial)
+        {
+            foreach (var pc in FindObjectsOfType<PlayerController>())
+            {
+                pc.FreezeForWin();
+                pc.SetVisible(false);
+            }
+        }
+
         Debug.Log($"[GameScreenManager] Started with {activePlayerCount} tracked player(s).");
     }
 

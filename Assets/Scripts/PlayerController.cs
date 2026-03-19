@@ -71,6 +71,16 @@ public class PlayerController : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         if (animator != null) modelTransform = animator.transform;
 
+        // Zero-friction material so the player slides along walls instead of sticking
+        if (capsule != null)
+        {
+            PhysicMaterial frictionless = new PhysicMaterial("PlayerNoFriction");
+            frictionless.dynamicFriction = 0f;
+            frictionless.staticFriction = 0f;
+            frictionless.frictionCombine = PhysicMaterialCombine.Minimum;
+            capsule.material = frictionless;
+        }
+
         originalScale = transform.localScale;
 
         rb.constraints = RigidbodyConstraints.FreezePositionZ

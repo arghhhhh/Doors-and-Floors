@@ -1470,6 +1470,7 @@ MonoBehaviour:
   rb: {fileID: 0}
   useBodyTracking: 0
   trackingXOffset: 0
+  needsOffsetRecalculation: 0
 --- !u!54 &965527825
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1597,6 +1598,7 @@ MonoBehaviour:
   rb: {fileID: 0}
   useBodyTracking: 0
   trackingXOffset: 0
+  needsOffsetRecalculation: 0
 --- !u!54 &1036767374
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2119,7 +2121,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 14, y: 0.5, z: 2}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: -0.39, z: 0}
 --- !u!4 &1954392716
 Transform:
   m_ObjectHideFlags: 0
