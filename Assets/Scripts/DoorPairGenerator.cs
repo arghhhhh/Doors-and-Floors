@@ -6,8 +6,8 @@ public class DoorPairGenerator : MonoBehaviour
     [Header("Layout")]
     [Tooltip("Floors in order from bottom to top. Belt i hangs under floor i+1.")]
     public Transform[] floors; // Assign Floor_0 through Floor_5
-    public float beltLeftBound = -6f;
-    public float beltRightBound = 6f;
+    public float beltLeftBound = -7f;
+    public float beltRightBound = 7f;
     public int minDoorsPerBelt = 3;
     public int maxDoorsPerBelt = 5;
 

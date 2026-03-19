@@ -1191,11 +1191,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   floors: []
-  beltLeftBound: -6
-  beltRightBound: 6
+  beltLeftBound: -7
+  beltRightBound: 7
   minDoorsPerBelt: 3
   maxDoorsPerBelt: 5
-  doorSize: {x: 0.8, y: 1.2, z: 0.4}
+  doorSize: {x: 0.8, y: 1.2, z: 0.1}
   doorHangDown: 0.6
   conveyorSpeed: 1.5
   doorColors:
@@ -1356,7 +1356,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 6
-  jumpForce: 8
+  jumpForce: 4.8
   groundCheckDistance: 0.15
   groundLayer:
     serializedVersion: 2
@@ -1479,7 +1479,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 6
-  jumpForce: 8
+  jumpForce: 4.8
   groundCheckDistance: 0.15
   groundLayer:
     serializedVersion: 2
