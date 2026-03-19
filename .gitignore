@@ -115,3 +115,8 @@ InitTestScene*.unity*
 !.claude/agents/
 .claude/agents/*
 !.claude/agents/unity.md
+
+#unity-cli
+.unity/cache/
+.unity/symbol-index.json
+.unity/symbol-index.json.meta
