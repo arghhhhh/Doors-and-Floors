@@ -245,18 +245,24 @@ public class PlayerController : MonoBehaviour
             pos.y += centerOffsetY * (1f - s);
             pos.z = -0.3f;
             transform.position = pos;
+            rb.position = pos;
 
             yield return null;
         }
         transform.localScale = Vector3.zero;
 
         // --- Move to destination ---
-        // Flag for BodyTrackingInput to recalculate offset from actual tracked
-        // position on the next frame, instead of accumulating deltas which
-        // drift in builds due to frame-rate-dependent trigger timing.
+        // Apply an approximate offset immediately so BodyTrackingInput doesn't
+        // snap the player back before it can recalculate. The recalculation on
+        // the next tracking frame will correct any imprecision.
+        float deltaX = destination.x - transform.position.x;
+        trackingXOffset += deltaX;
         needsOffsetRecalculation = true;
-        transform.position = new Vector3(destination.x, destination.y, -0.3f);
-
+        Vector3 destPos = new Vector3(destination.x, destination.y, -0.3f);
+        transform.position = destPos;
+        // Sync rb.position so Rigidbody interpolation doesn't pull
+        // transform.position back to the old location during the pause.
+        rb.position = destPos;
         // Brief pause at zero scale
         yield return new WaitForSeconds(0.05f);
         if (gen != resetGeneration) yield break;
@@ -278,6 +284,7 @@ public class PlayerController : MonoBehaviour
             pos.y += centerOffsetY * (1f - t); // lower feet as scale grows
             pos.z = -0.3f;
             transform.position = pos;
+            rb.position = pos;
 
             yield return null;
         }
