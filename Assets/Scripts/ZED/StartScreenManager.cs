@@ -576,7 +576,9 @@ public class StartScreenManager : MonoBehaviour
         {
             if (CurrentState == LobbyState.WaitingForP2 || CurrentState == LobbyState.WaitingForP2Confirm)
             {
-                countdownEl.text = $"Starting in {Mathf.CeilToInt(p2Countdown)}s";
+                bool p2Joined = trackingProvider != null && trackingProvider.IsPlayerAssigned(2);
+                string mode = p2Joined ? "multiplayer" : "solo";
+                countdownEl.text = $"Starting {mode} in {Mathf.CeilToInt(p2Countdown)}s";
                 countdownEl.style.display = DisplayStyle.Flex;
             }
             else
