@@ -113,9 +113,14 @@
 #winner-photo {
     width: 128px;
     height: 128px;
+    min-width: 128px;
+    min-height: 128px;
+    max-width: 128px;
+    max-height: 128px;
     border-width: 3px;
     border-color: var(--nes-gold);
     margin-bottom: 24px;
+    -unity-background-scale-mode: scale-to-fit;
 }
 
 #final-time-text {
@@ -133,7 +138,7 @@
 #high-score-list {
     width: 100%;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     margin-bottom: 20px;
 }
@@ -141,8 +146,9 @@
 .score-entry {
     flex-direction: column;
     align-items: center;
-    width: 90px;
-    margin: 6px 8px;
+    flex-shrink: 1;
+    width: 76px;
+    margin: 6px 4px;
 }
 
 .score-rank {
