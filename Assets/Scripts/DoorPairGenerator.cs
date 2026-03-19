@@ -120,7 +120,7 @@ public class DoorPairGenerator : MonoBehaviour
         // Make the visual collider a trigger
         BoxCollider col = door.GetComponent<BoxCollider>();
         col.isTrigger = true;
-        col.size = new Vector3(1.5f, 1.5f, 3f); // Generous trigger zone
+        col.size = new Vector3(1.5f, 1f, 3f); // Trigger zone matches door height
 
         PortalDoor portal = door.AddComponent<PortalDoor>();
 

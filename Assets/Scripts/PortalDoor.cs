@@ -90,12 +90,8 @@ public class PortalDoor : MonoBehaviour
         pairedDoor.lastTeleportTime = Time.time;
 
         Vector3 dest = pairedDoor.transform.position + Vector3.up * teleportYOffset;
-        float delay = GameManager.Instance != null ? GameManager.Instance.teleportDelay : 0f;
 
-        if (delay > 0f)
-            player.StartDelayedTeleport(dest, delay);
-        else
-            player.TeleportTo(dest);
+        player.TeleportTo(transform, dest);
     }
 
     public void SetColor(Color color)

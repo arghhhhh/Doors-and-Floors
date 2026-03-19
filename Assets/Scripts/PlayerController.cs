@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -16,12 +16,17 @@ public class PlayerController : MonoBehaviour
     public KeyCode rightKey = KeyCode.D;
     public KeyCode jumpKey = KeyCode.W;
 
+    [Header("Portal Animation")]
+    public float portalShrinkDuration = 0.2f;
+    public float portalGrowDuration = 0.2f;
+
     [Header("Identity")]
     public int playerNumber = 1;
     public Texture2D profilePhoto;
 
     [HideInInspector] public Rigidbody rb;
     bool isGrounded;
+    bool wasGrounded;
     public bool IsGrounded => isGrounded;
     CapsuleCollider capsule;
     Renderer playerRenderer;
@@ -44,21 +49,23 @@ public class PlayerController : MonoBehaviour
     GameObject profileQuad;
     Renderer profileRenderer;
 
+    Vector3 originalScale;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         capsule = GetComponent<CapsuleCollider>();
-        // Try root renderer first (capsule placeholder), then fall back to child renderer (character model)
         playerRenderer = GetComponent<Renderer>();
         animator = GetComponentInChildren<Animator>();
         if (animator != null) modelTransform = animator.transform;
+
+        originalScale = transform.localScale;
 
         rb.constraints = RigidbodyConstraints.FreezePositionZ
                        | RigidbodyConstraints.FreezeRotation;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        // Players pass through each other
         Physics.IgnoreLayerCollision(gameObject.layer, gameObject.layer, true);
 
         CreateProfileQuad();
@@ -98,7 +105,6 @@ public class PlayerController : MonoBehaviour
 
         float moveX = 0f;
 
-        // Body tracking input is handled by BodyTrackingInput component
         if (!useBodyTracking)
         {
             if (Input.GetKey(leftKey)) moveX -= 1f;
@@ -116,7 +122,6 @@ public class PlayerController : MonoBehaviour
             moveX = rb.velocity.x / moveSpeed;
         }
 
-        // Drive animator
         if (animator != null)
         {
             animator.SetFloat("Speed", Mathf.Abs(moveX));
@@ -124,8 +129,6 @@ public class PlayerController : MonoBehaviour
             animator.SetFloat("VelocityY", rb.velocity.y);
         }
 
-        // Rotate child model to face movement direction
-        // Y=180 forward (toward camera), Y=90 moving right, Y=270 moving left
         if (modelTransform != null)
         {
             float targetY;
@@ -135,7 +138,6 @@ public class PlayerController : MonoBehaviour
             modelTransform.localRotation = Quaternion.Euler(0f, targetY, 0f);
         }
 
-        // Clamp Z position (slightly in front of doors so player renders on top)
         Vector3 pos = transform.position;
         if (pos.z != -0.3f)
         {
@@ -146,6 +148,11 @@ public class PlayerController : MonoBehaviour
 
     void CheckGround()
     {
+        // Don't update ground state while frozen (teleport animation) —
+        // otherwise the raycast can detect the floor at the destination,
+        // creating a false ground→air transition that resets teleportedThisJump.
+        if (frozen) return;
+
         float scaleY = transform.lossyScale.y;
         float halfHeight = capsule != null ? capsule.height * 0.5f * scaleY : 0.5f;
         float centerY = capsule != null ? capsule.center.y * scaleY : 0f;
@@ -154,46 +161,104 @@ public class PlayerController : MonoBehaviour
 
         if (isGrounded)
         {
-            teleportedThisJump = false;
             hasLandedSinceReset = true;
         }
+
+        // Only reset teleportedThisJump on a fresh jump (ground → air transition)
+        if (wasGrounded && !isGrounded)
+        {
+            teleportedThisJump = false;
+        }
+
+        wasGrounded = isGrounded;
     }
 
+    public void TeleportTo(Transform entryDoor, Vector3 destination)
+    {
+        StartCoroutine(PortalAnimationCoroutine(entryDoor, destination));
+    }
+
+    // Legacy overload (keyboard mode / direct calls)
     public void TeleportTo(Vector3 destination)
     {
-        float deltaX = destination.x - transform.position.x;
-        trackingXOffset += deltaX;
-
-        rb.isKinematic = true;
-        rb.velocity = Vector3.zero;
-        transform.position = new Vector3(destination.x, destination.y, -0.3f);
-        teleportedThisJump = true;
-        rb.isKinematic = false;
+        StartCoroutine(PortalAnimationCoroutine(null, destination));
     }
 
     public void StartDelayedTeleport(Vector3 destination, float delay)
     {
-        StartCoroutine(DelayedTeleportCoroutine(destination, delay));
+        StartCoroutine(PortalAnimationCoroutine(null, destination));
     }
 
-    IEnumerator DelayedTeleportCoroutine(Vector3 destination, float delay)
+    IEnumerator PortalAnimationCoroutine(Transform entryDoor, Vector3 destination)
     {
         int gen = resetGeneration;
 
         frozen = true;
         rb.velocity = Vector3.zero;
         rb.isKinematic = true;
-        SetAllRenderersVisible(false);
+        teleportedThisJump = true;
 
-        yield return new WaitForSeconds(delay);
+        // Character center offset (pivot is at feet, center is higher)
+        float centerOffsetY = capsule != null ? capsule.center.y * originalScale.y : 0.5f;
+        Vector3 shrinkOrigin = transform.position;
 
-        if (gen != resetGeneration) yield break;
+        // --- Shrink at entry (pull toward door's live position) ---
+        float elapsed = 0f;
+        while (elapsed < portalShrinkDuration)
+        {
+            if (gen != resetGeneration) yield break;
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / portalShrinkDuration);
+            float eased = t * t;
+            float s = 1f - t;
 
+            transform.localScale = originalScale * s;
+
+            // Track the door's current position each frame
+            Vector3 doorTarget = entryDoor != null ? entryDoor.position : shrinkOrigin;
+            doorTarget.z = -0.3f;
+
+            Vector3 pos = Vector3.Lerp(shrinkOrigin, doorTarget, eased);
+            pos.y += centerOffsetY * (1f - s);
+            pos.z = -0.3f;
+            transform.position = pos;
+
+            yield return null;
+        }
+        transform.localScale = Vector3.zero;
+
+        // --- Move to destination ---
         float deltaX = destination.x - transform.position.x;
         trackingXOffset += deltaX;
         transform.position = new Vector3(destination.x, destination.y, -0.3f);
-        teleportedThisJump = true;
-        SetAllRenderersVisible(true);
+
+        // Brief pause at zero scale
+        yield return new WaitForSeconds(0.05f);
+        if (gen != resetGeneration) yield break;
+
+        // --- Grow at exit (scale around center) ---
+        Vector3 growOrigin = transform.position;
+        elapsed = 0f;
+        while (elapsed < portalGrowDuration)
+        {
+            if (gen != resetGeneration) yield break;
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / portalGrowDuration);
+            float s = t;
+
+            transform.localScale = originalScale * s;
+
+            // Offset Y so character center stays at destination height
+            Vector3 pos = growOrigin;
+            pos.y += centerOffsetY * (1f - t); // lower feet as scale grows
+            pos.z = -0.3f;
+            transform.position = pos;
+
+            yield return null;
+        }
+        transform.localScale = originalScale;
+        transform.position = new Vector3(growOrigin.x, growOrigin.y, -0.3f);
+
         rb.isKinematic = false;
         frozen = false;
     }
@@ -214,7 +279,9 @@ public class PlayerController : MonoBehaviour
         frozen = false;
         teleportedThisJump = false;
         hasLandedSinceReset = false;
+        wasGrounded = false;
         trackingXOffset = 0f;
+        transform.localScale = originalScale;
         rb.isKinematic = false;
         rb.velocity = Vector3.zero;
         transform.position = new Vector3(spawnPosition.x, spawnPosition.y, -0.3f);
@@ -223,14 +290,11 @@ public class PlayerController : MonoBehaviour
 
     void SetAllRenderersVisible(bool visible)
     {
-        // Toggle root renderer if present (capsule placeholder)
         if (playerRenderer != null)
             playerRenderer.enabled = visible;
 
-        // Toggle all child renderers (character model meshes)
         foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
         {
-            // Skip the profile quad renderer — it is managed separately below
             if (profileRenderer != null && r == profileRenderer) continue;
             r.enabled = visible;
         }

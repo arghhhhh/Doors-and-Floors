@@ -118,6 +118,11 @@ public class GameManager : MonoBehaviour
         if (doorGenerator != null)
             doorGenerator.Generate();
 
+        // Reset finish line
+        FinishLine finishLine = FindObjectOfType<FinishLine>();
+        if (finishLine != null)
+            finishLine.ResetFinishLine();
+
         // Hide win panel
         if (uiManager != null)
             uiManager.HideWinPanel();
