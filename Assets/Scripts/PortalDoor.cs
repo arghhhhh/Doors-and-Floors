@@ -22,6 +22,9 @@ public class PortalDoor : MonoBehaviour
     [HideInInspector] public float swivelSpeed = 1.0f;   // oscillation speed
     [HideInInspector] public float swivelOffset = 0f;    // phase offset
 
+    // Shader reference to ensure it's included in builds (Shader.Find is stripped)
+    [SerializeField] public Shader spiralShader;
+
     static Material sharedSpiralMaterial;
 
     float lastTeleportTime = -1f;
@@ -48,10 +51,9 @@ public class PortalDoor : MonoBehaviour
     {
         if (doorRenderer == null) return;
 
-        // Load and cache the spiral shader once
+        // Create shared material from the serialized shader reference
         if (sharedSpiralMaterial == null)
         {
-            Shader spiralShader = Shader.Find("ZedGames/PortalSpiral");
             if (spiralShader != null)
                 sharedSpiralMaterial = new Material(spiralShader);
         }
@@ -105,3 +107,4 @@ public class PortalDoor : MonoBehaviour
         }
     }
 }
+ 

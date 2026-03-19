@@ -28,6 +28,8 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Hue shift applied to the player's materials (0 = no change, 0.6 = yellow→purple)")]
     [Range(0f, 1f)]
     public float hueShift = 0f;
+    [Tooltip("HueShiftLit shader — must be assigned so it's included in builds")]
+    public Shader hueShiftShader;
 
     [HideInInspector] public Rigidbody rb;
     bool isGrounded;
@@ -46,11 +48,18 @@ public class PlayerController : MonoBehaviour
     int resetGeneration;
 
     /// <summary>
-    /// Cumulative X offset from teleports, used by BodyTrackingInput to keep
+    /// X offset from teleports, used by BodyTrackingInput to keep
     /// the character near the portal exit rather than snapping back to the
-    /// tracked body mapped position.
+    /// tracked body mapped position. Recalculated from actual tracking data
+    /// after each teleport to avoid accumulation errors.
     /// </summary>
     [HideInInspector] public float trackingXOffset;
+
+    /// <summary>
+    /// Set after teleportation so BodyTrackingInput recalculates the offset
+    /// from the actual tracked position rather than accumulating deltas.
+    /// </summary>
+    [HideInInspector] public bool needsOffsetRecalculation;
 
     Vector3 originalScale;
 
@@ -77,12 +86,12 @@ public class PlayerController : MonoBehaviour
 
     void ApplyHueShift()
     {
-        Shader hueShader = Shader.Find("ZedGames/HueShiftLit");
-        if (hueShader == null)
+        if (hueShiftShader == null)
         {
-            Debug.LogWarning("[PlayerController] HueShiftLit shader not found.");
+            Debug.LogWarning("[PlayerController] hueShiftShader not assigned.");
             return;
         }
+        Shader hueShader = hueShiftShader;
 
         foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
         {
@@ -242,8 +251,10 @@ public class PlayerController : MonoBehaviour
         transform.localScale = Vector3.zero;
 
         // --- Move to destination ---
-        float deltaX = destination.x - transform.position.x;
-        trackingXOffset += deltaX;
+        // Flag for BodyTrackingInput to recalculate offset from actual tracked
+        // position on the next frame, instead of accumulating deltas which
+        // drift in builds due to frame-rate-dependent trigger timing.
+        needsOffsetRecalculation = true;
         transform.position = new Vector3(destination.x, destination.y, -0.3f);
 
         // Brief pause at zero scale
@@ -271,8 +282,13 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
         transform.localScale = originalScale;
-        transform.position = new Vector3(growOrigin.x, growOrigin.y, -0.3f);
+        Vector3 finalPos = new Vector3(growOrigin.x, growOrigin.y, -0.3f);
+        transform.position = finalPos;
 
+        // Sync physics position before switching off kinematic to prevent
+        // interpolation from using a stale position (causes offset in builds).
+        rb.position = finalPos;
+        rb.velocity = Vector3.zero;
         rb.isKinematic = false;
         frozen = false;
     }
@@ -308,6 +324,7 @@ public class PlayerController : MonoBehaviour
         hasLandedSinceReset = false;
         wasGrounded = false;
         trackingXOffset = 0f;
+        needsOffsetRecalculation = false;
         transform.localScale = originalScale;
         rb.isKinematic = false;
         rb.velocity = Vector3.zero;

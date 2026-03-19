@@ -20,6 +20,9 @@ public class GameScreenManager : MonoBehaviour
     [Tooltip("Optional prefab for tracking lost indicator. If null, a simple one is created.")]
     public GameObject trackingLostPrefab;
 
+    [Header("Shaders (must be assigned so they're included in builds)")]
+    public Shader trackingLostShader;
+
     [Header("Scene Navigation")]
     public string startScreenSceneName = "StartScreen";
     public float returnToStartDelay = 2f;
@@ -104,6 +107,7 @@ public class GameScreenManager : MonoBehaviour
         TrackingLostOverlay overlay = playerObj.GetComponent<TrackingLostOverlay>();
         if (overlay == null)
             overlay = playerObj.AddComponent<TrackingLostOverlay>();
+        overlay.scanLinesShader = trackingLostShader;
         input.trackingLostOverlay = overlay;
 
         // Create tracking lost indicator text

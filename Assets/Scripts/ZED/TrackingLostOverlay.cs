@@ -14,12 +14,15 @@ public class TrackingLostOverlay : MonoBehaviour
     [Tooltip("Local Y offset (center of quad relative to player pivot)")]
     public float overlayYOffset = 1.0f;
 
+    [Tooltip("Must be assigned so the shader is included in builds")]
+    public Shader scanLinesShader;
+
     GameObject overlayQuad;
     Renderer overlayRenderer;
     Material overlayMaterial;
     bool isShowing;
 
-    void Awake()
+    void Start()
     {
         CreateOverlay();
     }
@@ -39,10 +42,10 @@ public class TrackingLostOverlay : MonoBehaviour
 
         overlayRenderer = overlayQuad.GetComponent<Renderer>();
 
-        Shader shader = Shader.Find("ZedGames/TrackingLostScanLines");
+        Shader shader = scanLinesShader;
         if (shader == null)
         {
-            Debug.LogWarning("[TrackingLostOverlay] TrackingLostScanLines shader not found, falling back to Unlit/Color");
+            Debug.LogWarning("[TrackingLostOverlay] scanLinesShader not assigned, falling back to Unlit/Color");
             shader = Shader.Find("Unlit/Color");
         }
 

@@ -190,6 +190,17 @@ public class BodyTrackingInput : MonoBehaviour
             float normalizedX = Mathf.InverseLerp(physicalXMin, physicalXMax, pelvisWorld.x);
             if (mirrorX)
                 normalizedX = 1f - normalizedX;
+
+            // After teleportation, recalculate offset from actual tracked position
+            // so the player stays exactly at the destination. This avoids
+            // accumulation errors from frame-rate-dependent trigger timing.
+            if (playerController.needsOffsetRecalculation)
+            {
+                float mappedX = Mathf.Lerp(gameXMin, gameXMax, normalizedX);
+                playerController.trackingXOffset = transform.position.x - mappedX;
+                playerController.needsOffsetRecalculation = false;
+            }
+
             float targetX = Mathf.Lerp(gameXMin, gameXMax, normalizedX) + playerController.trackingXOffset;
 
             float currentX = transform.position.x;

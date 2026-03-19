@@ -12,6 +12,7 @@ public class DoorPairGenerator : MonoBehaviour
     public int maxDoorsPerBelt = 5;
 
     [Header("Door Prefab Settings")]
+    [SerializeField] Shader spiralShader;
     public Vector3 doorSize = new Vector3(1.0f, 1.4f, 0.15f);
     public float doorHangDown = 0.9f; // How far doors hang below the ceiling
 
@@ -127,6 +128,7 @@ public class DoorPairGenerator : MonoBehaviour
         col.size = new Vector3(1.5f, 1f, 3f); // Trigger zone matches door height
 
         PortalDoor portal = door.AddComponent<PortalDoor>();
+        portal.spiralShader = spiralShader;
 
         // Each door gets its own swivel animation
         portal.swivelCenter = Random.Range(75f, 105f);
@@ -276,3 +278,4 @@ public class DoorPairGenerator : MonoBehaviour
         return unpaired[Random.Range(0, unpaired.Count)];
     }
 }
+ 

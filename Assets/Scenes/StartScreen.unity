@@ -787,7 +787,10 @@ MonoBehaviour:
   scalePulseAmount: 0.8
   scalePulseSpeed: 4
   sweepSpeed: 3
+  useNoseFacing: 0
+  noseConfMin: 40
   showCameraPreview: 0
+  sweepShader: {fileID: 4800000, guid: 99f7de4ee90667349a023f7821f52eea, type: 3}
   gameSceneName: GameScreen
 --- !u!4 &1329402188
 Transform:

@@ -1285,6 +1285,7 @@ MonoBehaviour:
   beltRightBound: 7
   minDoorsPerBelt: 3
   maxDoorsPerBelt: 5
+  spiralShader: {fileID: 4800000, guid: 20ca090957232a84f9878757043f65fd, type: 3}
   doorSize: {x: 0.8, y: 1.2, z: 0.1}
   doorHangDown: 0.6
   conveyorSpeed: 1.5
@@ -1366,6 +1367,7 @@ MonoBehaviour:
   player1Object: {fileID: 965527823}
   player2Object: {fileID: 1036767372}
   trackingLostPrefab: {fileID: 0}
+  trackingLostShader: {fileID: 4800000, guid: 65e7317974d11e740bf1c1825d420284, type: 3}
   startScreenSceneName: StartScreen
   returnToStartDelay: 2
 --- !u!4 &881329856
@@ -1464,6 +1466,7 @@ MonoBehaviour:
   playerNumber: 1
   profilePhoto: {fileID: 2800000, guid: 65957580a8508aa48ac79ed09b7e1af9, type: 3}
   hueShift: 0
+  hueShiftShader: {fileID: 4800000, guid: 11fa833694bc8894493d27aaa1019c01, type: 3}
   rb: {fileID: 0}
   useBodyTracking: 0
   trackingXOffset: 0
@@ -1590,6 +1593,7 @@ MonoBehaviour:
   playerNumber: 2
   profilePhoto: {fileID: 2800000, guid: fa41e4965f6533745a7d517162e80ff5, type: 3}
   hueShift: 0.4
+  hueShiftShader: {fileID: 4800000, guid: 11fa833694bc8894493d27aaa1019c01, type: 3}
   rb: {fileID: 0}
   useBodyTracking: 0
   trackingXOffset: 0
