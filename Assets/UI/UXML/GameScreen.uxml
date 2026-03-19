@@ -30,7 +30,7 @@
                 <VisualElement name="high-score-list" />
                 <VisualElement name="restart-row">
                     <VisualElement name="gesture-icon" />
-                    <appui:Text name="instructions-text" text="" size="S" />
+                    <appui:Text name="instructions-text" text="" size="M" />
                 </VisualElement>
                 <appui:Text name="countdown-text" text="" size="M" />
             </VisualElement>

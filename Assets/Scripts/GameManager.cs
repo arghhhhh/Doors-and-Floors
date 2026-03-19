@@ -55,6 +55,7 @@ public class GameManager : MonoBehaviour
         else
         {
             CurrentState = GameState.Playing;
+            SFXManager.Instance?.Play(SFXManager.Instance?.voiceGoGoGo);
         }
     }
 
@@ -78,6 +79,7 @@ public class GameManager : MonoBehaviour
         showedTutorial = true;
         UnfreezeAllPlayers();
         CurrentState = GameState.Playing;
+        SFXManager.Instance?.Play(SFXManager.Instance?.voiceGoGoGo);
     }
 
     void Update()
@@ -138,6 +140,17 @@ public class GameManager : MonoBehaviour
         bool isHighScore = HighScoreManager.Instance != null
             && HighScoreManager.Instance.IsHighScore(elapsedTime);
 
+        // Play win sound based on player count
+        if (SFXManager.Instance != null)
+        {
+            if (players.Length <= 1)
+                SFXManager.Instance.Play(SFXManager.Instance.voiceWinner);
+            else if (playerNumber == 1)
+                SFXManager.Instance.Play(SFXManager.Instance.voiceP1Wins);
+            else
+                SFXManager.Instance.Play(SFXManager.Instance.voiceP2Wins);
+        }
+
         if (uiManager != null)
         {
             uiManager.ShowWinPanel(playerNumber, elapsedTime, isHighScore,
@@ -146,6 +159,7 @@ public class GameManager : MonoBehaviour
 
         if (isHighScore && HighScoreManager.Instance != null)
         {
+            SFXManager.Instance?.Play(SFXManager.Instance?.voiceNewHighscore);
             Texture2D photo = winner != null ? winner.profilePhoto : null;
             HighScoreManager.Instance.AddScore($"Player {playerNumber}", elapsedTime, photo);
         }
@@ -154,6 +168,7 @@ public class GameManager : MonoBehaviour
     public void ReturnToMenu()
     {
         showedTutorial = false;
+        SFXManager.Instance?.Play(SFXManager.Instance?.sfxReturnHome);
 
         if (ZEDTrackingProvider.Instance != null)
             ZEDTrackingProvider.Instance.ClearAllAssignments();
@@ -202,6 +217,7 @@ public class GameManager : MonoBehaviour
         }
 
         CurrentState = GameState.Playing;
+        SFXManager.Instance?.Play(SFXManager.Instance?.voiceGoGoGo);
     }
 
     public Vector3 GetSpawnPosition(int playerNumber)

@@ -91,6 +91,7 @@ public class PortalDoor : MonoBehaviour
 
         Vector3 dest = pairedDoor.transform.position + Vector3.up * teleportYOffset;
 
+        SFXManager.Instance?.Play(SFXManager.Instance?.sfxTeleport);
         player.TeleportTo(transform, dest);
     }
 

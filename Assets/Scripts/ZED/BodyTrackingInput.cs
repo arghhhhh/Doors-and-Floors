@@ -147,6 +147,7 @@ public class BodyTrackingInput : MonoBehaviour
                 {
                     trackingState = TrackingState.Lost;
                     lostTimer = 0f;
+                    SFXManager.Instance?.Play(SFXManager.Instance?.voiceTrackingLost);
                     if (playerController != null)
                         playerController.FreezeForTrackingLoss();
                     if (trackingLostOverlay != null)

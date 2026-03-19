@@ -321,6 +321,7 @@ public class StartScreenManager : MonoBehaviour
                 p1CandidateBodyId = kvp.Key;
                 p1GestureHoldTime = 0f;
                 SetQuadPlaying(p1Video, p1Renderer);
+                SFXManager.Instance?.Play(SFXManager.Instance?.sfxPlayerTracked);
                 CurrentState = LobbyState.WaitingForP1Confirm;
                 break;
             }
@@ -337,6 +338,7 @@ public class StartScreenManager : MonoBehaviour
             // Lost the candidate — go back to detection
             p1CandidateBodyId = -1;
             SetQuadIdle(p1Video, p1Renderer);
+            SFXManager.Instance?.Play(SFXManager.Instance?.sfxPlayerLost);
             CurrentState = LobbyState.WaitingForP1Detection;
             return;
         }
@@ -353,6 +355,7 @@ public class StartScreenManager : MonoBehaviour
                 // P1 confirmed — capture face, freeze video, and assign
                 CapturePlayerFace(1, body);
                 SetQuadConfirmed(p1Video, p1Renderer, 1);
+                SFXManager.Instance?.Play(SFXManager.Instance?.voiceP1Activated);
                 trackingProvider.AssignBodyToPlayer(1, p1CandidateBodyId);
                 p2Countdown = p2CountdownDuration;
                 lastUnassignedBodyCount = 0;
@@ -409,6 +412,7 @@ public class StartScreenManager : MonoBehaviour
         {
             p2CandidateBodyId = -1;
             SetQuadIdle(p2Video, p2Renderer);
+            SFXManager.Instance?.Play(SFXManager.Instance?.sfxPlayerLost);
             CurrentState = LobbyState.WaitingForP2;
             return;
         }
@@ -425,6 +429,7 @@ public class StartScreenManager : MonoBehaviour
                 // P2 confirmed — capture face, freeze video, assign, and launch
                 CapturePlayerFace(2, body);
                 SetQuadConfirmed(p2Video, p2Renderer, 2);
+                SFXManager.Instance?.Play(SFXManager.Instance?.voiceP2Activated);
                 trackingProvider.AssignBodyToPlayer(2, p2CandidateBodyId);
                 LaunchGame();
                 return;
@@ -467,6 +472,7 @@ public class StartScreenManager : MonoBehaviour
     void LaunchGame()
     {
         CurrentState = LobbyState.Launching;
+        SFXManager.Instance?.Play(SFXManager.Instance?.sfxGameStarting);
         Debug.Log($"[StartScreenManager] Launching with {trackingProvider.GetAssignedPlayerCount()} player(s)");
         SceneManager.LoadScene(gameSceneName);
     }

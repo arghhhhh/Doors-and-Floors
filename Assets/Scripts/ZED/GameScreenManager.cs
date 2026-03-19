@@ -195,6 +195,7 @@ public class GameScreenManager : MonoBehaviour
     IEnumerator ReturnToStartScreen()
     {
         Debug.Log("[GameScreenManager] All players lost. Returning to StartScreen...");
+        SFXManager.Instance?.Play(SFXManager.Instance?.sfxReturnHome);
         yield return new WaitForSeconds(returnToStartDelay);
 
         if (ZEDTrackingProvider.Instance != null)

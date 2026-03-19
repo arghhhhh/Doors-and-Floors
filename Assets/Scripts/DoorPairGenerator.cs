@@ -19,18 +19,22 @@ public class DoorPairGenerator : MonoBehaviour
     public float conveyorSpeed = 1.5f;
 
     [Header("Colors")]
+    [Tooltip("13 colors with evenly-spaced hues (27.7° apart) for maximum contrast")]
     public Color[] doorColors = new Color[]
     {
-        new Color(1f, 0.2f, 0.2f),    // Red
-        new Color(0.2f, 0.6f, 1f),    // Blue
-        new Color(0.2f, 1f, 0.2f),    // Green
-        new Color(1f, 1f, 0.2f),      // Yellow
-        new Color(1f, 0.5f, 0f),      // Orange
-        new Color(0.8f, 0.2f, 1f),    // Purple
-        new Color(0f, 1f, 1f),        // Cyan
-        new Color(1f, 0.4f, 0.7f),    // Pink
-        new Color(0.6f, 0.3f, 0f),    // Brown
-        new Color(0.5f, 1f, 0.5f),    // Light green
+        new Color(1f, 0f, 0f),        // 0° Red
+        new Color(1f, 0.46f, 0f),     // 27.7° Orange
+        new Color(1f, 0.92f, 0f),     // 55.4° Gold
+        new Color(0.62f, 1f, 0f),     // 83.1° Lime
+        new Color(0.15f, 1f, 0f),     // 110.8° Green
+        new Color(0f, 1f, 0.31f),     // 138.5° Spring green
+        new Color(0f, 1f, 0.77f),     // 166.2° Turquoise
+        new Color(0f, 0.77f, 1f),     // 193.8° Sky blue
+        new Color(0f, 0.31f, 1f),     // 221.5° Blue
+        new Color(0.15f, 0f, 1f),     // 249.2° Indigo
+        new Color(0.62f, 0f, 1f),     // 276.9° Violet
+        new Color(1f, 0f, 0.92f),     // 304.6° Magenta
+        new Color(1f, 0f, 0.46f),     // 332.3° Rose
     };
 
     List<ConveyorBelt> belts = new List<ConveyorBelt>();
