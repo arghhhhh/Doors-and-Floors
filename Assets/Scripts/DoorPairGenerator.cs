@@ -12,7 +12,7 @@ public class DoorPairGenerator : MonoBehaviour
     public int maxDoorsPerBelt = 5;
 
     [Header("Door Prefab Settings")]
-    public Vector3 doorSize = new Vector3(1.0f, 1.4f, 0.4f);
+    public Vector3 doorSize = new Vector3(1.0f, 1.4f, 0.15f);
     public float doorHangDown = 0.9f; // How far doors hang below the ceiling
 
     [Header("Conveyor Settings")]
@@ -122,7 +122,21 @@ public class DoorPairGenerator : MonoBehaviour
         col.isTrigger = true;
         col.size = new Vector3(1.5f, 1.5f, 3f); // Generous trigger zone
 
-        door.AddComponent<PortalDoor>();
+        PortalDoor portal = door.AddComponent<PortalDoor>();
+
+        // Each door gets its own swivel animation
+        portal.swivelCenter = Random.Range(75f, 105f);
+        portal.swivelRange = Random.Range(15f, 30f);
+        portal.swivelSpeed = Random.Range(0.8f, 2.0f);
+        portal.swivelOffset = Random.Range(0f, Mathf.PI * 2f);
+
+        // Random dark edge color (dark brown / dark grey / dark green range)
+        portal.edgeColor = new Color(
+            Random.Range(0.06f, 0.15f),
+            Random.Range(0.06f, 0.14f),
+            Random.Range(0.04f, 0.12f)
+        );
+
         return door;
     }
 

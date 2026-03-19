@@ -3,6 +3,7 @@ Shader "ZedGames/PortalSpiral"
     Properties
     {
         [MainColor] _BaseColor("Door Color", Color) = (0.2, 0.6, 1.0, 1.0)
+        _EdgeColor("Edge Color", Color) = (0.12, 0.1, 0.08, 1.0)
         _Brightness("Brightness", Range(0.5, 3.0)) = 1.3
         _Speed("Animation Speed", Float) = 1.0
         _NumArms("Spiral Arms", Float) = 6.0
@@ -44,10 +45,12 @@ Shader "ZedGames/PortalSpiral"
             {
                 float4 positionHCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
+                float3 normalOS : TEXCOORD1;
             };
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor;
+                half4 _EdgeColor;
                 half _Brightness;
                 float _Speed;
                 float _NumArms;
@@ -79,11 +82,16 @@ Shader "ZedGames/PortalSpiral"
                 Varyings OUT;
                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
                 OUT.uv = IN.uv;
+                OUT.normalOS = IN.normalOS;
                 return OUT;
             }
 
             half4 frag(Varyings IN) : SV_Target
             {
+                // Edge faces (not front/back) render as the edge color
+                if (abs(IN.normalOS.z) < 0.5)
+                    return _EdgeColor;
+
                 // Center UV so (0,0) is the middle of the face
                 float cX = IN.uv.x - 0.5;
                 float cY = IN.uv.y - 0.5;

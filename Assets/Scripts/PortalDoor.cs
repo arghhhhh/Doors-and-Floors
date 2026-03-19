@@ -14,6 +14,13 @@ public class PortalDoor : MonoBehaviour
     [HideInInspector] public float spiralBands = 10.0f;
     [HideInInspector] public float spiralAngle = 1.0472f;
     [HideInInspector] public float spiralBrightness = 1.3f;
+    [HideInInspector] public Color edgeColor = new Color(0.12f, 0.1f, 0.08f);
+
+    // Swivel animation (set by DoorPairGenerator)
+    [HideInInspector] public float swivelCenter = 90f;   // midpoint angle
+    [HideInInspector] public float swivelRange = 25f;    // ± degrees from center
+    [HideInInspector] public float swivelSpeed = 1.0f;   // oscillation speed
+    [HideInInspector] public float swivelOffset = 0f;    // phase offset
 
     static Material sharedSpiralMaterial;
 
@@ -28,6 +35,13 @@ public class PortalDoor : MonoBehaviour
     void Start()
     {
         ApplySpiralMaterial();
+    }
+
+    void Update()
+    {
+        // Swivel: oscillate Y rotation around swivelCenter
+        float angle = swivelCenter + Mathf.Sin(Time.time * swivelSpeed + swivelOffset) * swivelRange;
+        transform.localRotation = Quaternion.Euler(0f, angle, 0f);
     }
 
     void ApplySpiralMaterial()
@@ -52,6 +66,7 @@ public class PortalDoor : MonoBehaviour
             mat.SetFloat("_NumBands", spiralBands);
             mat.SetFloat("_SpiralAngle", spiralAngle);
             mat.SetFloat("_Brightness", spiralBrightness);
+            mat.SetColor("_EdgeColor", edgeColor);
             doorRenderer.material = mat;
         }
     }
