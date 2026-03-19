@@ -52,6 +52,11 @@ public class StartScreenManager : MonoBehaviour
     Texture2D p1FacePreview;
     Texture2D p2FacePreview;
 
+    // Debug tuning sliders for face crop
+    float debugPadSides = 0.15f;
+    float debugPadTop = 0.6f;
+    float debugPadBottom = 0.05f;
+
     // P1 candidate tracking
     int p1CandidateBodyId = -1;
     float p1GestureHoldTime;
@@ -125,6 +130,17 @@ public class StartScreenManager : MonoBehaviour
         }
 
         if (!trackingProvider.IsZEDReady) return;
+
+        // Debug: press C to recapture face from any tracked body
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            var bodies = trackingProvider.GetAllCurrentBodies();
+            foreach (var kvp in bodies)
+            {
+                CapturePlayerFace(1, kvp.Value);
+                break;
+            }
+        }
 
         switch (CurrentState)
         {
@@ -277,7 +293,8 @@ public class StartScreenManager : MonoBehaviour
     {
         if (trackingProvider == null || trackingProvider.zedManager == null) return;
 
-        Texture2D face = FaceCaptureHelper.CaptureFace(trackingProvider.zedManager, body);
+        Texture2D face = FaceCaptureHelper.CaptureFace(trackingProvider.zedManager, body, 128,
+            debugPadSides, debugPadTop, debugPadBottom);
         if (face != null)
         {
             trackingProvider.SetPlayerProfilePhoto(playerNumber, face);
@@ -329,6 +346,26 @@ public class StartScreenManager : MonoBehaviour
             GUI.Box(new UnityEngine.Rect(x - 4, y - 20, previewSize + 8, previewSize + 28), "P2 Face");
             GUI.DrawTexture(new UnityEngine.Rect(x, y, previewSize, previewSize), p2FacePreview);
         }
+
+        // Debug sliders for face crop tuning
+        float sliderW = 200f;
+        float sliderX = Screen.width - sliderW - padding;
+        float sliderY = padding + previewSize + 40f;
+        if (p2FacePreview != null) sliderY += previewSize + 40f;
+
+        GUI.Box(new UnityEngine.Rect(sliderX - 4, sliderY, sliderW + 8, 110), "Face Crop [C=capture]");
+        sliderY += 20;
+
+        GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Sides: {debugPadSides:F2}");
+        debugPadSides = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadSides, -0.5f, 1f);
+        sliderY += 30;
+
+        GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Top: {debugPadTop:F2}");
+        debugPadTop = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadTop, -0.5f, 1.5f);
+        sliderY += 30;
+
+        GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Bottom: {debugPadBottom:F2}");
+        debugPadBottom = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadBottom, -0.5f, 1f);
     }
 
     void UpdateUI()

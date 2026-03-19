@@ -21,7 +21,11 @@ public static class FaceCaptureHelper
     /// Captures the face region from the ZED camera's current frame for the given body.
     /// Derives the crop region from face-related 2D keypoints (nose, eyes, ears, neck).
     /// </summary>
-    public static Texture2D CaptureFace(ZEDManager zedManager, DetectedBody body, int outputSize = 128)
+    /// <param name="padSides">Horizontal padding as fraction of face bbox width.</param>
+    /// <param name="padTop">Top padding as fraction of face bbox height (forehead).</param>
+    /// <param name="padBottom">Bottom padding as fraction of face bbox height (chin).</param>
+    public static Texture2D CaptureFace(ZEDManager zedManager, DetectedBody body, int outputSize = 128,
+        float padSides = 0.15f, float padTop = 0.6f, float padBottom = 0.05f)
     {
         if (zedManager == null || zedManager.zedCamera == null || body == null)
             return null;
@@ -62,19 +66,16 @@ public static class FaceCaptureHelper
         int imgW = frameTex.width;
         int imgH = frameTex.height;
 
-        // Expand the bounding box with generous padding to include full head
         float bboxW = maxX - minX;
         float bboxH = maxY - minY;
-        float padX = Mathf.Max(bboxW * 0.5f, 30f);
-        float padY = Mathf.Max(bboxH * 0.5f, 30f);
+        float pX = bboxW * padSides;
+        float pTop = bboxH * padTop;
+        float pBot = bboxH * padBottom;
 
-        // Extra padding above for forehead/hair
-        float padTop = padY * 1.2f;
-
-        int x0 = Mathf.Max(0, Mathf.FloorToInt(minX - padX));
-        int y0 = Mathf.Max(0, Mathf.FloorToInt(minY - padTop));
-        int x1 = Mathf.Min(imgW, Mathf.CeilToInt(maxX + padX));
-        int y1 = Mathf.Min(imgH, Mathf.CeilToInt(maxY + padY));
+        int x0 = Mathf.Max(0, Mathf.FloorToInt(minX - pX));
+        int y0 = Mathf.Max(0, Mathf.FloorToInt(minY - pTop));
+        int x1 = Mathf.Min(imgW, Mathf.CeilToInt(maxX + pX));
+        int y1 = Mathf.Min(imgH, Mathf.CeilToInt(maxY + pBot));
 
         int cropW = x1 - x0;
         int cropH = y1 - y0;
