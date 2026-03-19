@@ -46,8 +46,6 @@ public class PlayerController : MonoBehaviour
     /// tracked body mapped position.
     /// </summary>
     [HideInInspector] public float trackingXOffset;
-    GameObject profileQuad;
-    Renderer profileRenderer;
 
     Vector3 originalScale;
 
@@ -67,50 +65,14 @@ public class PlayerController : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
         Physics.IgnoreLayerCollision(gameObject.layer, gameObject.layer, true);
-
-        CreateProfileQuad();
-    }
-
-    void CreateProfileQuad()
-    {
-        if (profilePhoto == null) return;
-
-        profileQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        profileQuad.name = $"ProfilePhoto_P{playerNumber}";
-        profileQuad.transform.SetParent(transform);
-
-        float quadSize = 0.8f;
-        profileQuad.transform.localPosition = new Vector3(0f, 1.2f, -0.1f);
-        profileQuad.transform.localScale = new Vector3(quadSize, quadSize, 1f);
-
-        Collider quadCol = profileQuad.GetComponent<Collider>();
-        if (quadCol != null) DestroyImmediate(quadCol);
-
-        profileRenderer = profileQuad.GetComponent<Renderer>();
-        Material mat = new Material(Shader.Find("Unlit/Texture"));
-        mat.mainTexture = profilePhoto;
-        profileRenderer.material = mat;
     }
 
     /// <summary>
-    /// Updates the profile photo at runtime (e.g. from a ZED face capture).
-    /// Rebuilds the floating quad if needed.
+    /// Sets the profile photo (used for win screen and high scores, not displayed in-game).
     /// </summary>
     public void SetProfilePhoto(Texture2D photo)
     {
         profilePhoto = photo;
-
-        if (profileQuad != null)
-        {
-            // Update existing quad's texture
-            if (profileRenderer != null)
-                profileRenderer.material.mainTexture = photo;
-        }
-        else
-        {
-            // Quad wasn't created in Awake (no photo was assigned then), create it now
-            CreateProfileQuad();
-        }
     }
 
     void FixedUpdate()
@@ -284,6 +246,19 @@ public class PlayerController : MonoBehaviour
         frozen = false;
     }
 
+    public void FreezeForTrackingLoss()
+    {
+        frozen = true;
+        rb.velocity = Vector3.zero;
+        rb.isKinematic = true;
+    }
+
+    public void UnfreezeFromTrackingLoss()
+    {
+        frozen = false;
+        rb.isKinematic = false;
+    }
+
     public void FreezeForWin()
     {
         frozen = true;
@@ -316,11 +291,7 @@ public class PlayerController : MonoBehaviour
 
         foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
         {
-            if (profileRenderer != null && r == profileRenderer) continue;
             r.enabled = visible;
         }
-
-        if (profileRenderer != null)
-            profileRenderer.enabled = visible;
     }
 }

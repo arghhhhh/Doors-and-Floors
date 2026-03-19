@@ -45,6 +45,9 @@ public class BodyTrackingInput : MonoBehaviour
     public GameObject trackingLostIndicator;
     public Text trackingLostTimerText;
 
+    [Header("Tracking Loss Overlay")]
+    public TrackingLostOverlay trackingLostOverlay;
+
     enum TrackingState { Tracking, Searching, Lost }
     TrackingState trackingState = TrackingState.Tracking;
 
@@ -111,6 +114,10 @@ public class BodyTrackingInput : MonoBehaviour
             lostTimer = 0f;
             if (trackingLostIndicator != null)
                 trackingLostIndicator.SetActive(false);
+            if (trackingLostOverlay != null)
+                trackingLostOverlay.Hide();
+            if (playerController != null)
+                playerController.UnfreezeFromTrackingLoss();
         }
     }
 
@@ -128,15 +135,10 @@ public class BodyTrackingInput : MonoBehaviour
     void Update()
     {
         if (playerController == null) return;
-        if (playerController.IsFrozen) return;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
-        // Cooldown tick
-        if (jumpCooldownTimer > 0f)
-            jumpCooldownTimer -= Time.deltaTime;
-
-        // Handle tracking loss states
+        // Handle tracking loss states (must run even when frozen, since we freeze the player on loss)
         switch (trackingState)
         {
             case TrackingState.Searching:
@@ -145,10 +147,14 @@ public class BodyTrackingInput : MonoBehaviour
                 {
                     trackingState = TrackingState.Lost;
                     lostTimer = 0f;
+                    if (playerController != null)
+                        playerController.FreezeForTrackingLoss();
+                    if (trackingLostOverlay != null)
+                        trackingLostOverlay.Show();
                     if (trackingLostIndicator != null)
                         trackingLostIndicator.SetActive(true);
                 }
-                return; // Don't process input while searching
+                return;
 
             case TrackingState.Lost:
                 lostTimer += Time.deltaTime;
@@ -157,12 +163,18 @@ public class BodyTrackingInput : MonoBehaviour
 
                 if (lostTimer >= trackingLossTimeout)
                 {
-                    // Timeout — remove player
                     GameScreenManager gsm = FindObjectOfType<GameScreenManager>();
                     if (gsm != null) gsm.RemovePlayer(playerNumber);
                 }
-                return; // Don't process input while lost
+                return;
         }
+
+        // Don't process input while frozen for other reasons (portal, win)
+        if (playerController.IsFrozen) return;
+
+        // Cooldown tick
+        if (jumpCooldownTimer > 0f)
+            jumpCooldownTimer -= Time.deltaTime;
 
         // --- Active tracking input ---
         if (trackingProvider == null) return;

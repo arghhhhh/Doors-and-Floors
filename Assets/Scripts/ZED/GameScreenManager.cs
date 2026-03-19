@@ -100,7 +100,13 @@ public class GameScreenManager : MonoBehaviour
             input = playerObj.AddComponent<BodyTrackingInput>();
         input.playerNumber = playerNumber;
 
-        // Create tracking lost indicator
+        // Create tracking lost overlay (scan lines)
+        TrackingLostOverlay overlay = playerObj.GetComponent<TrackingLostOverlay>();
+        if (overlay == null)
+            overlay = playerObj.AddComponent<TrackingLostOverlay>();
+        input.trackingLostOverlay = overlay;
+
+        // Create tracking lost indicator text
         CreateTrackingLostUI(playerObj, input);
 
         // Set initial spawn X from current physical position
