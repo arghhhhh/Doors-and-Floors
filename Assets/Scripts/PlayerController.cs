@@ -24,6 +24,11 @@ public class PlayerController : MonoBehaviour
     public int playerNumber = 1;
     public Texture2D profilePhoto;
 
+    [Header("Appearance")]
+    [Tooltip("Hue shift applied to the player's materials (0 = no change, 0.6 = yellow→purple)")]
+    [Range(0f, 1f)]
+    public float hueShift = 0f;
+
     [HideInInspector] public Rigidbody rb;
     bool isGrounded;
     bool wasGrounded;
@@ -65,6 +70,32 @@ public class PlayerController : MonoBehaviour
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
         Physics.IgnoreLayerCollision(gameObject.layer, gameObject.layer, true);
+
+        if (hueShift > 0f)
+            ApplyHueShift();
+    }
+
+    void ApplyHueShift()
+    {
+        Shader hueShader = Shader.Find("ZedGames/HueShiftLit");
+        if (hueShader == null)
+        {
+            Debug.LogWarning("[PlayerController] HueShiftLit shader not found.");
+            return;
+        }
+
+        foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+        {
+            Material[] mats = r.materials;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                Material clone = new Material(mats[i]);
+                clone.shader = hueShader;
+                clone.SetFloat("_HueShift", hueShift);
+                mats[i] = clone;
+            }
+            r.materials = mats;
+        }
     }
 
     /// <summary>
