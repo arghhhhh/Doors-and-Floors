@@ -56,9 +56,13 @@ public class StartScreenManager : MonoBehaviour
     [Tooltip("Minimum nose confidence when useNoseFacing is enabled")]
     public float noseConfMin = 40f;
 
-    [Header("Debug")]
-    [Tooltip("Shows face capture debug UI: preview, sliders, and C-key recapture")]
-    public bool showCameraPreview = false;
+    #if UNITY_EDITOR
+    [Header("Debug (editor only)")]
+    [Tooltip("Shows face crop preview and tuning sliders (C key to recapture)")]
+    public bool debugFaceCrop = false;
+    [Tooltip("Shows per-body gesture recognition, confidence values, and candidate scoring")]
+    public bool debugGestureTracking = false;
+    #endif
 
     [Header("Shaders")]
     [Tooltip("SweepUnlit shader — must be assigned so it's included in builds")]
@@ -81,14 +85,16 @@ public class StartScreenManager : MonoBehaviour
     // Blink state
     bool promptVisible = true;
 
-    // Debug face preview textures
-    Texture2D p1FacePreview;
-    Texture2D p2FacePreview;
-
-    // Debug tuning sliders for face crop (only used when showCameraPreview is true)
+    // Face crop padding (tunable via debug sliders in editor)
     float debugPadSides = -0.03f;
     float debugPadTop = 0.37f;
     float debugPadBottom = -0.24f;
+
+    #if UNITY_EDITOR
+    // Debug face preview textures (editor only)
+    Texture2D p1FacePreview;
+    Texture2D p2FacePreview;
+    #endif
 
     // Video player references (cached from quads)
     VideoPlayer p1Video;
@@ -171,8 +177,9 @@ public class StartScreenManager : MonoBehaviour
 
         UpdateBodyStillness();
 
+        #if UNITY_EDITOR
         // Debug: press C to recapture face from any tracked body
-        if (showCameraPreview && Input.GetKeyDown(KeyCode.C))
+        if (debugFaceCrop && Input.GetKeyDown(KeyCode.C))
         {
             var bodies = trackingProvider.GetAllCurrentBodies();
             foreach (var kvp in bodies)
@@ -181,6 +188,7 @@ public class StartScreenManager : MonoBehaviour
                 break;
             }
         }
+        #endif
 
         switch (CurrentState)
         {
@@ -612,11 +620,13 @@ public class StartScreenManager : MonoBehaviour
         if (face != null)
         {
             trackingProvider.SetPlayerProfilePhoto(playerNumber, face);
-            if (showCameraPreview)
+            #if UNITY_EDITOR
+            if (debugFaceCrop)
             {
                 if (playerNumber == 1) p1FacePreview = face;
                 else if (playerNumber == 2) p2FacePreview = face;
             }
+            #endif
             Debug.Log($"[StartScreenManager] Captured face for P{playerNumber}");
         }
         else
@@ -644,55 +654,60 @@ public class StartScreenManager : MonoBehaviour
         return worldKeypoints;
     }
 
+    #if UNITY_EDITOR
     void OnGUI()
     {
-        if (!showCameraPreview) return;
+        if (!debugFaceCrop && !debugGestureTracking) return;
 
-        float previewSize = 128f;
         float padding = 10f;
-        float x = Screen.width - previewSize - padding;
 
-        if (p1FacePreview != null)
+        // ── Face Crop debug ──────────────────────────────────────────
+        if (debugFaceCrop)
         {
-            float y = padding;
-            GUI.Box(new UnityEngine.Rect(x - 4, y - 20, previewSize + 8, previewSize + 28), "P1 Face");
-            GUI.DrawTexture(new UnityEngine.Rect(x, y, previewSize, previewSize), p1FacePreview);
+            float previewSize = 128f;
+            float x = Screen.width - previewSize - padding;
+
+            if (p1FacePreview != null)
+            {
+                float y = padding;
+                GUI.Box(new UnityEngine.Rect(x - 4, y - 20, previewSize + 8, previewSize + 28), "P1 Face");
+                GUI.DrawTexture(new UnityEngine.Rect(x, y, previewSize, previewSize), p1FacePreview);
+            }
+
+            if (p2FacePreview != null)
+            {
+                float y = padding + previewSize + 40f;
+                GUI.Box(new UnityEngine.Rect(x - 4, y - 20, previewSize + 8, previewSize + 28), "P2 Face");
+                GUI.DrawTexture(new UnityEngine.Rect(x, y, previewSize, previewSize), p2FacePreview);
+            }
+
+            float sliderW = 200f;
+            float sliderX = Screen.width - sliderW - padding;
+            float sliderY = padding + previewSize + 40f;
+            if (p2FacePreview != null) sliderY += previewSize + 40f;
+
+            GUI.Box(new UnityEngine.Rect(sliderX - 4, sliderY, sliderW + 8, 110), "Face Crop [C=capture]");
+            sliderY += 20;
+
+            GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Sides: {debugPadSides:F2}");
+            debugPadSides = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadSides, -0.5f, 1f);
+            sliderY += 30;
+
+            GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Top: {debugPadTop:F2}");
+            debugPadTop = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadTop, -0.5f, 1.5f);
+            sliderY += 30;
+
+            GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Bottom: {debugPadBottom:F2}");
+            debugPadBottom = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadBottom, -0.5f, 1f);
         }
 
-        if (p2FacePreview != null)
-        {
-            float y = padding + previewSize + 40f;
-            GUI.Box(new UnityEngine.Rect(x - 4, y - 20, previewSize + 8, previewSize + 28), "P2 Face");
-            GUI.DrawTexture(new UnityEngine.Rect(x, y, previewSize, previewSize), p2FacePreview);
-        }
-
-        // Debug sliders for face crop tuning
-        float sliderW = 200f;
-        float sliderX = Screen.width - sliderW - padding;
-        float sliderY = padding + previewSize + 40f;
-        if (p2FacePreview != null) sliderY += previewSize + 40f;
-
-        GUI.Box(new UnityEngine.Rect(sliderX - 4, sliderY, sliderW + 8, 110), "Face Crop [C=capture]");
-        sliderY += 20;
-
-        GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Sides: {debugPadSides:F2}");
-        debugPadSides = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadSides, -0.5f, 1f);
-        sliderY += 30;
-
-        GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Top: {debugPadTop:F2}");
-        debugPadTop = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadTop, -0.5f, 1.5f);
-        sliderY += 30;
-
-        GUI.Label(new UnityEngine.Rect(sliderX, sliderY, sliderW, 20), $"Bottom: {debugPadBottom:F2}");
-        debugPadBottom = GUI.HorizontalSlider(new UnityEngine.Rect(sliderX, sliderY + 16, sliderW, 20), debugPadBottom, -0.5f, 1f);
-
-        // Gesture diagnostics for each tracked body
-        if (trackingProvider != null && trackingProvider.IsZEDReady)
+        // ── Gesture Tracking debug ───────────────────────────────────
+        if (debugGestureTracking && trackingProvider != null && trackingProvider.IsZEDReady)
         {
             var bodies = trackingProvider.GetAllCurrentBodies();
-            float diagY = sliderY + 50f;
+            float diagY = padding;
             float diagW = Screen.width - 20f;
-            GUI.Box(new UnityEngine.Rect(6, diagY, diagW, 20 + bodies.Count * 18), "Gesture Diagnostics");
+            GUI.Box(new UnityEngine.Rect(6, diagY, diagW, 20 + bodies.Count * 18), "Gesture Tracking");
             diagY += 20;
             foreach (var kvp in bodies)
             {
@@ -710,6 +725,7 @@ public class StartScreenManager : MonoBehaviour
             }
         }
     }
+    #endif
 
     void UpdateUI()
     {
