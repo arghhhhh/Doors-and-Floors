@@ -6,8 +6,10 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public enum GameState { Playing, Won }
-    public GameState CurrentState { get; private set; } = GameState.Playing;
+    public enum GameState { Tutorial, Playing, Won }
+    public GameState CurrentState { get; private set; } = GameState.Tutorial;
+
+    static bool showedTutorial;
 
     [Header("References")]
     public DoorPairGenerator doorGenerator;
@@ -38,13 +40,41 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        CurrentState = GameState.Playing;
         elapsedTime = 0f;
 
         if (doorGenerator != null)
-        {
             doorGenerator.Generate();
+
+        if (!showedTutorial)
+        {
+            CurrentState = GameState.Tutorial;
+            FreezeAllPlayers();
+            if (uiManager != null)
+                uiManager.ShowTutorial(OnTutorialComplete);
         }
+        else
+        {
+            CurrentState = GameState.Playing;
+        }
+    }
+
+    void FreezeAllPlayers()
+    {
+        foreach (var p in FindObjectsOfType<PlayerController>())
+            p.FreezeForWin();
+    }
+
+    void UnfreezeAllPlayers()
+    {
+        foreach (var p in FindObjectsOfType<PlayerController>())
+            p.ResetPlayer(GetSpawnPosition(p.playerNumber));
+    }
+
+    void OnTutorialComplete()
+    {
+        showedTutorial = true;
+        UnfreezeAllPlayers();
+        CurrentState = GameState.Playing;
     }
 
     void Update()
@@ -61,6 +91,13 @@ public class GameManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Q))
             {
                 DebugWinPlayer1();
+            }
+
+            // Debug: T key toggles tutorial modal
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                if (uiManager != null)
+                    uiManager.DebugToggleTutorial();
             }
         }
 
@@ -113,6 +150,8 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMenu()
     {
+        showedTutorial = false;
+
         if (ZEDTrackingProvider.Instance != null)
             ZEDTrackingProvider.Instance.ClearAllAssignments();
 

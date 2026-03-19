@@ -81,7 +81,14 @@ GameScreen
   Activates assigned players, attaches BodyTrackingInput
   Falls back to keyboard if no ZED assignments
                                 |
-  DoorPairGenerator.Generate() → GameState.Playing
+  DoorPairGenerator.Generate()
+                                |
+  First load only: 10s tutorial modal (two looping WebM clips
+    showing run + jump controls, rendered via VideoPlayer → RenderTexture
+    → UI Toolkit backgroundImage). Players frozen until modal closes.
+    Skipped on replay (static flag).
+                                |
+                          GameState.Playing
                                 |
                           Timer runs, players move via body tracking
                                 |

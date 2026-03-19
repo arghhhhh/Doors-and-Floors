@@ -3,6 +3,22 @@
     <Style src="../Styles/game-screen.uss" />
     <appui:Panel name="game-root" picking-mode="Ignore">
         <appui:Heading name="timer-text" text="00:00:00" size="L" picking-mode="Ignore" />
+        <VisualElement name="tutorial-panel" class="nes-hidden">
+            <VisualElement name="tutorial-inner">
+                <appui:Heading name="tutorial-title" text="How to Play" size="L" />
+                <VisualElement name="tutorial-clips">
+                    <VisualElement name="tutorial-clip-left" class="tutorial-clip">
+                        <VisualElement name="tutorial-video-run" class="tutorial-video" />
+                        <appui:Text name="tutorial-text-run" text="Move horizontally to move your character" size="S" />
+                    </VisualElement>
+                    <VisualElement name="tutorial-clip-right" class="tutorial-clip">
+                        <VisualElement name="tutorial-video-jump" class="tutorial-video" />
+                        <appui:Text name="tutorial-text-jump" text="Jump to make your character jump" size="S" />
+                    </VisualElement>
+                </VisualElement>
+                <appui:Text name="tutorial-countdown" text="" size="M" />
+            </VisualElement>
+        </VisualElement>
         <VisualElement name="win-panel" class="nes-hidden">
             <VisualElement name="win-panel-inner">
                 <appui:Heading name="winner-text" text="" size="XL" />

@@ -1414,6 +1414,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   highScoreEntryTemplate: {fileID: 9197481963319205126, guid: f7ea29e73c20c3946bd8b42e9133318d,
     type: 3}
+  gestureIcon: {fileID: 0}
+  winCountdownDuration: 10
+  runClip: {fileID: 32900000, guid: a1e4e9723de2ee94ea2a451ff86d674d, type: 3}
+  jumpClip: {fileID: 32900000, guid: 2a4323615f0fe2e44a17bc9f14130c55, type: 3}
+  tutorialDuration: 10
 --- !u!1 &965527823
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,63 @@
 /* GameScreen layout */
 
+/* Tutorial modal */
+#tutorial-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(12, 12, 12, 0.9);
+}
+
+#tutorial-inner {
+    border-width: 4px;
+    border-color: var(--nes-white);
+    background-color: var(--nes-black);
+    padding: 32px;
+    align-items: center;
+}
+
+#tutorial-title {
+    color: var(--nes-gold);
+    -unity-text-align: middle-center;
+    margin-bottom: 24px;
+}
+
+#tutorial-clips {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.tutorial-clip {
+    align-items: center;
+    margin: 0 24px;
+    max-width: 280px;
+}
+
+.tutorial-video {
+    width: 240px;
+    height: 240px;
+    border-width: 3px;
+    border-color: var(--nes-white);
+    margin-bottom: 12px;
+}
+
+.tutorial-clip appui--text {
+    color: var(--nes-white);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+#tutorial-countdown {
+    color: var(--nes-gray);
+    -unity-text-align: middle-center;
+    margin-top: 20px;
+}
+
 #game-root {
     flex-grow: 1;
     background-color: rgba(0, 0, 0, 0);

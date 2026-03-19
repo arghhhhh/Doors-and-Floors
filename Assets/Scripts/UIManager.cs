@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.Video;
 using Unity.AppUI.UI;
 using sl;
 
@@ -14,6 +16,11 @@ public class UIManager : MonoBehaviour
     public Texture2D gestureIcon;
     [Tooltip("Countdown duration before auto-return to menu")]
     public float winCountdownDuration = 10f;
+
+    [Header("Tutorial")]
+    public VideoClip runClip;
+    public VideoClip jumpClip;
+    public float tutorialDuration = 10f;
 
     // UI Toolkit elements
     Heading timerEl;
@@ -36,6 +43,19 @@ public class UIManager : MonoBehaviour
     float gestureHoldTime;
     const float gestureHoldRequired = 1f;
 
+    // Tutorial state
+    VisualElement tutorialPanelEl;
+    VisualElement tutorialVideoRunEl;
+    VisualElement tutorialVideoJumpEl;
+    Unity.AppUI.UI.Text tutorialCountdownEl;
+    float tutorialCountdown;
+    bool tutorialActive;
+    Action tutorialCompleteCallback;
+    RenderTexture runRT;
+    RenderTexture jumpRT;
+    VideoPlayer runPlayer;
+    VideoPlayer jumpPlayer;
+
     void Awake()
     {
         var uiDoc = GetComponent<UIDocument>();
@@ -52,10 +72,26 @@ public class UIManager : MonoBehaviour
         instructionsEl = root.Q<Unity.AppUI.UI.Text>("instructions-text");
         gestureIconEl = root.Q<VisualElement>("gesture-icon");
         countdownEl = root.Q<Unity.AppUI.UI.Text>("countdown-text");
+        tutorialPanelEl = root.Q<VisualElement>("tutorial-panel");
+        tutorialVideoRunEl = root.Q<VisualElement>("tutorial-video-run");
+        tutorialVideoJumpEl = root.Q<VisualElement>("tutorial-video-jump");
+        tutorialCountdownEl = root.Q<Unity.AppUI.UI.Text>("tutorial-countdown");
     }
 
     void Update()
     {
+        if (tutorialActive)
+        {
+            tutorialCountdown -= Time.deltaTime;
+            if (tutorialCountdownEl != null)
+                tutorialCountdownEl.text = $"Starting in {Mathf.CeilToInt(Mathf.Max(0f, tutorialCountdown))}s";
+
+            if (tutorialCountdown <= 0f)
+                HideTutorial();
+
+            return;
+        }
+
         if (!winCountdownActive) return;
 
         // Countdown to auto-return to menu
@@ -126,6 +162,70 @@ public class UIManager : MonoBehaviour
             highScoreListEl.Clear();
 
         winCountdownActive = false;
+    }
+
+    public void ShowTutorial(Action onComplete)
+    {
+        tutorialCompleteCallback = onComplete;
+        tutorialCountdown = tutorialDuration;
+        tutorialActive = true;
+
+        if (tutorialPanelEl != null)
+            tutorialPanelEl.style.display = DisplayStyle.Flex;
+
+        // Create RenderTextures
+        runRT = new RenderTexture(512, 512, 0);
+        jumpRT = new RenderTexture(512, 512, 0);
+
+        // Create VideoPlayers as child GameObjects
+        runPlayer = CreateTutorialPlayer("TutorialRunPlayer", runClip, runRT);
+        jumpPlayer = CreateTutorialPlayer("TutorialJumpPlayer", jumpClip, jumpRT);
+
+        // Assign RenderTextures to UI elements
+        if (tutorialVideoRunEl != null)
+            tutorialVideoRunEl.style.backgroundImage = Background.FromRenderTexture(runRT);
+        if (tutorialVideoJumpEl != null)
+            tutorialVideoJumpEl.style.backgroundImage = Background.FromRenderTexture(jumpRT);
+    }
+
+    VideoPlayer CreateTutorialPlayer(string name, VideoClip clip, RenderTexture rt)
+    {
+        GameObject go = new GameObject(name);
+        go.transform.SetParent(transform);
+        VideoPlayer vp = go.AddComponent<VideoPlayer>();
+        vp.clip = clip;
+        vp.renderMode = VideoRenderMode.RenderTexture;
+        vp.targetTexture = rt;
+        vp.isLooping = true;
+        vp.playOnAwake = false;
+        vp.audioOutputMode = VideoAudioOutputMode.None;
+        vp.Play();
+        return vp;
+    }
+
+    void HideTutorial()
+    {
+        tutorialActive = false;
+
+        if (tutorialPanelEl != null)
+            tutorialPanelEl.style.display = DisplayStyle.None;
+
+        // Clean up VideoPlayers and RenderTextures
+        if (runPlayer != null) { Destroy(runPlayer.gameObject); runPlayer = null; }
+        if (jumpPlayer != null) { Destroy(jumpPlayer.gameObject); jumpPlayer = null; }
+        if (runRT != null) { runRT.Release(); Destroy(runRT); runRT = null; }
+        if (jumpRT != null) { jumpRT.Release(); Destroy(jumpRT); jumpRT = null; }
+
+        tutorialCompleteCallback?.Invoke();
+        tutorialCompleteCallback = null;
+    }
+
+    public void DebugToggleTutorial()
+    {
+        if (tutorialActive)
+            HideTutorial();
+        else
+            ShowTutorial(null);
     }
 
     public void UpdateTimer(float time)
