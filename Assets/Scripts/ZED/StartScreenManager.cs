@@ -26,9 +26,9 @@ public class StartScreenManager : MonoBehaviour
     [Tooltip("Countdown duration for P2 after P1 confirms")]
     public float p2CountdownDuration = 10f;
 
-    [Header("Camera Preview")]
-    [Tooltip("Show ZED camera feed as a small overlay in the top-left corner")]
-    public bool showCameraPreview = true;
+    [Header("Debug")]
+    [Tooltip("Shows face capture debug UI: preview, sliders, and C-key recapture")]
+    public bool showCameraPreview = false;
 
     [Header("Game Scene")]
     public string gameSceneName = "GameScreen";
@@ -36,7 +36,6 @@ public class StartScreenManager : MonoBehaviour
     public LobbyState CurrentState { get; private set; } = LobbyState.WaitingForP1Detection;
 
     ZEDTrackingProvider trackingProvider;
-    Camera zedCamera;
 
     // UI Toolkit elements
     Heading titleEl;
@@ -52,10 +51,10 @@ public class StartScreenManager : MonoBehaviour
     Texture2D p1FacePreview;
     Texture2D p2FacePreview;
 
-    // Debug tuning sliders for face crop
-    float debugPadSides = 0.15f;
-    float debugPadTop = 0.6f;
-    float debugPadBottom = 0.05f;
+    // Debug tuning sliders for face crop (only used when showCameraPreview is true)
+    float debugPadSides = -0.03f;
+    float debugPadTop = 0.37f;
+    float debugPadBottom = -0.24f;
 
     // P1 candidate tracking
     int p1CandidateBodyId = -1;
@@ -95,34 +94,11 @@ public class StartScreenManager : MonoBehaviour
             }
         }
 
-        // Find and configure ZED camera preview
-        if (trackingProvider != null && trackingProvider.zedManager != null)
-        {
-            Transform camLeft = trackingProvider.zedManager.transform.Find("Camera_Left");
-            if (camLeft != null)
-                zedCamera = camLeft.GetComponent<Camera>();
-        }
-        ApplyCameraPreview();
-
         UpdateUI();
-    }
-
-    void ApplyCameraPreview()
-    {
-        if (zedCamera == null) return;
-        zedCamera.enabled = showCameraPreview;
-
-        // Also toggle the Frame rendering plane
-        Transform frame = zedCamera.transform.Find("Frame");
-        if (frame != null)
-            frame.gameObject.SetActive(showCameraPreview);
     }
 
     void Update()
     {
-        // Keep camera preview in sync with toggle (supports runtime inspector changes)
-        ApplyCameraPreview();
-
         if (trackingProvider == null)
         {
             trackingProvider = ZEDTrackingProvider.Instance;
@@ -132,7 +108,7 @@ public class StartScreenManager : MonoBehaviour
         if (!trackingProvider.IsZEDReady) return;
 
         // Debug: press C to recapture face from any tracked body
-        if (Input.GetKeyDown(KeyCode.C))
+        if (showCameraPreview && Input.GetKeyDown(KeyCode.C))
         {
             var bodies = trackingProvider.GetAllCurrentBodies();
             foreach (var kvp in bodies)
@@ -298,8 +274,11 @@ public class StartScreenManager : MonoBehaviour
         if (face != null)
         {
             trackingProvider.SetPlayerProfilePhoto(playerNumber, face);
-            if (playerNumber == 1) p1FacePreview = face;
-            else if (playerNumber == 2) p2FacePreview = face;
+            if (showCameraPreview)
+            {
+                if (playerNumber == 1) p1FacePreview = face;
+                else if (playerNumber == 2) p2FacePreview = face;
+            }
             Debug.Log($"[StartScreenManager] Captured face for P{playerNumber}");
         }
         else
@@ -328,7 +307,8 @@ public class StartScreenManager : MonoBehaviour
 
     void OnGUI()
     {
-        // Debug preview: show captured face photos in the top-right corner
+        if (!showCameraPreview) return;
+
         float previewSize = 128f;
         float padding = 10f;
         float x = Screen.width - previewSize - padding;
