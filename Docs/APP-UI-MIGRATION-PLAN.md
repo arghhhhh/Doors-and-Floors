@@ -1,8 +1,10 @@
 # App UI Migration Plan — NES Theme
 
+> **Status: COMPLETED** — Migration fully implemented. Both scenes now use App UI (UI Toolkit) with NES theme. Legacy Canvas and EventSystem removed. This document preserved as historical reference.
+
 ## Context
 
-The game currently uses legacy Canvas + UnityEngine.UI for all UI (Text, RawImage, etc.). We're porting to App UI (com.unity.dt.app-ui v2.2.0-pre.6) which uses UXML layouts + USS styling — essentially HTML/CSS for Unity. This makes UI agent-driven development practical (declarative layouts, CSS-like theming) and enables a classic NES visual theme via USS custom properties.
+The game originally used legacy Canvas + UnityEngine.UI for all UI (Text, RawImage, etc.). It was ported to App UI (com.unity.dt.app-ui v2.2.0-pre.6) which uses UXML layouts + USS styling — essentially HTML/CSS for Unity. This makes UI agent-driven development practical (declarative layouts, CSS-like theming) and enables a classic NES visual theme via USS custom properties.
 
 Unity 2022.3 does NOT support source-generated data binding (`[ObservableProperty]`), so we'll use the direct element query pattern: `Q<T>("name")` to find elements and set `.text` directly — same flow as current code, just different element types.
 

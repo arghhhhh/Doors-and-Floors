@@ -5,19 +5,14 @@
 ### Hierarchy
 
 ```
-Main Camera          Orthographic, default settings
+Main Camera          Perspective, default settings
 Directional Light    Default scene lighting
 ZED_Rig_Mono         Prefab instance (DontDestroyOnLoad)
   ├── ZEDManager       Camera connection, body tracking, bodyFormat=BODY_38
   ├── ZEDTrackingProvider  Singleton, player-body assignments
   └── Camera_Left      Small viewport preview (top-left, 25% of screen, depth=10)
         └── Frame      Rendering plane for camera feed
-StartScreenManager   StartScreenManager script, references UI texts
-Canvas               Screen Space Overlay, CanvasScaler (1920x1080 ref)
-  ├── TitleText        Text, "DOORS & FLOORS", font size 72, centered
-  ├── P1StatusText     Text, bottom-left, player 1 status
-  ├── P2StatusText     Text, bottom-right, player 2 status
-  └── CountdownText    Text, centered, P2 countdown timer
+StartScreenManager   StartScreenManager + UIDocument (StartScreen.uxml)
 ```
 
 ### ZEDManager Configuration
@@ -44,33 +39,25 @@ Aligned with the BodyTrackingMulti sample scene. Key settings:
 ### Hierarchy
 
 ```
-Main Camera          Orthographic, size 8.5, position (0, 7.5, -10), dark bg
+Main Camera          Perspective, FOV 60, position (0, 7.5, -10), solid color bg
 Directional Light    Default scene lighting
 Global Volume        Post-processing (URP)
-Floor_0              Cube, Layer: Ground(8), scale (14, 0.3, 1)
-Floor_1              Cube, Layer: Ground(8), scale (14, 0.3, 1)
-Floor_2              Cube, Layer: Ground(8), scale (14, 0.3, 1)
-Floor_3              Cube, Layer: Ground(8), scale (14, 0.3, 1)
-Floor_4              Cube, Layer: Ground(8), scale (14, 0.3, 1)
-Floor_5              Cube, Layer: Ground(8), scale (14, 0.3, 1)  <- Win floor
-Floor_6              Cube, Layer: Ground(8), scale (14, 0.3, 1)  <- Roof (ceiling for last belt)
+Floor_0              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=-0.88
+Floor_1              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=1.62
+Floor_2              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=4.14
+Floor_3              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=6.62
+Floor_4              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=9.12
+Floor_5              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=11.62
+Floor_6              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=14.12  <- Roof (ceiling for last belt)
 Wall_Left            Cube, Layer: Ground(8), X=-7.25, scale (0.5, 16, 1)
 Wall_Right           Cube, Layer: Ground(8), X=+7.25, scale (0.5, 16, 1)
-Player1              Capsule, Layer: Player(9), Rigidbody + PlayerController
-Player2              Capsule, Layer: Player(9), Rigidbody + PlayerController
+Player1              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController
+Player2              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController
 GameManager          Empty, GameManager + DoorPairGenerator + HighScoreManager
-GameScreenManager    Empty, GameScreenManager (references Player1, Player2)
-WinZone              Empty, BoxCollider(trigger) + WinTrigger, spans Floor_5 area
-Canvas               Screen Space Overlay, CanvasScaler (1920x1080 ref), UIManager
-  ├── TimerText      Text, top-center, "00:00:00"
-  └── WinPanel       Panel (starts inactive), dark semi-transparent bg
-        ├── WinnerText       Text, "Player X Wins!"
-        ├── WinnerPhoto      RawImage (auto-created if missing)
-        ├── FinalTimeText    Text
-        ├── HighScoreLabel   Text
-        ├── HighScoreList    Container (auto-created if missing)
-        └── InstructionsText Text
-EventSystem          EventSystem + StandaloneInputModule
+GameScreenManager    Empty, GameScreenManager + UIManager + UIDocument (GameScreen.uxml)
+FinishLine           BoxCollider(trigger, size 14x0.5x2), FinishLine script, Y=12.25
+  └── [FinishLineRibbon]  Child mesh (FinishLineRibbon.fbx) with FinishLineCheckered material
+WinZone              BoxCollider(trigger), WinTrigger, position (0, 12.5, 0), scale (14, 1, 1)
 ```
 
 Note: ZED_Rig_Mono is NOT in this scene — it persists from StartScreen via DontDestroyOnLoad.
@@ -89,6 +76,7 @@ When body tracking is active, `GameScreenManager` attaches at runtime:
 | Index | Name    | Purpose                                       |
 | ----- | ------- | --------------------------------------------- |
 | 0     | Default | Floors, walls, doors, general objects         |
+| 3     | OpenPose| ZED skeleton visualization (toggled by ViewModeToggle) |
 | 8     | Ground  | Floor/wall colliders (used by ground raycast) |
 | 9     | Player  | Player capsules (self-collision disabled)     |
 
@@ -101,6 +89,7 @@ GameManager/
   ConveyorBelt_Floor0/     <- Hangs below Floor_1
     Door_F0_0              <- Cube with PortalDoor + BoxCollider(trigger)
     Door_F0_1
+    Door_F0_0_ghost        <- Visual-only clone (no collider) during wrap-around
     ...
   ConveyorBelt_Floor1/     <- Hangs below Floor_2
     Door_F1_0
@@ -113,9 +102,12 @@ GameManager/
 
 Each door is a Cube primitive with:
 
-- Scale: (1.0, 1.4, 0.4)
-- BoxCollider set to trigger, size (1.5, 1.5, 3.0)
-- PortalDoor component with paired reference and color
+- Scale: (1.0, 1.4, 0.15)
+- BoxCollider set to trigger, size (1.5, 1, 3)
+- PortalDoor component with paired reference, color, spiral shader params, and swivel animation
+- Material: `ZedGames/PortalSpiral` shader instance with per-door parameters
+- Y-rotation oscillates continuously (swivel animation)
+- Ghost clones appear during wrap-around (mesh + material only, no collider)
 
 ## Player Configuration
 
@@ -127,10 +119,24 @@ Each door is a Cube primitive with:
 | jumpKey         | W                                                                 | UpArrow          |
 | groundLayer     | Ground (Layer 8)                                                  | Ground (Layer 8) |
 | useBodyTracking | false (set at runtime by GameScreenManager)                       | same             |
-| Rigidbody       | Constraints: FreezeZ + FreezeRotation, Interpolate, Continuous CD |
+| Scale           | (0.34, 0.34, 0.34)                                               | same             |
+| CapsuleCollider | center (0, 1.375, 0), height 2.75, radius 0.75                   | same             |
+| Rigidbody       | Constraints: FreezeZ + FreezeRotation, Interpolate, Continuous CD | same             |
+| Position        | (-3, -0.3, 0)                                                     | (3, -0.3, 0)    |
 
 ## Camera
 
-- Orthographic, size 8.5
+- Perspective, FOV 60
 - Position: (0, 7.5, -10)
 - Covers all 7 floors (0 through 6) within the view
+- Solid color background
+
+## UI System
+
+Both scenes use App UI (UI Toolkit) instead of legacy Canvas:
+
+- **PanelSettings**: `Assets/UI/Settings/GamePanelSettings.asset` (1920x1080 reference, scale with screen)
+- **StartScreen**: UIDocument on StartScreenManager → `StartScreen.uxml`
+- **GameScreen**: UIDocument on GameScreenManager → `GameScreen.uxml`
+- **Theme**: `nes-theme.uss` (NES pixel font, color palette, zero border-radius)
+- No EventSystem needed (UI Toolkit handles its own input)
