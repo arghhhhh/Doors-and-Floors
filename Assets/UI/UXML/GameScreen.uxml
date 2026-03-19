@@ -10,7 +10,11 @@
                 <appui:Heading name="final-time-text" text="" size="M" />
                 <appui:Text name="high-score-label" text="" size="L" />
                 <VisualElement name="high-score-list" />
-                <appui:Text name="instructions-text" text="" size="S" />
+                <VisualElement name="restart-row">
+                    <VisualElement name="gesture-icon" />
+                    <appui:Text name="instructions-text" text="" size="S" />
+                </VisualElement>
+                <appui:Text name="countdown-text" text="" size="M" />
             </VisualElement>
         </VisualElement>
     </appui:Panel>

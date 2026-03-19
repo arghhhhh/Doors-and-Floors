@@ -91,8 +91,12 @@ GameScreen
                           GameState.Won
                       All players frozen
                       Win panel + high scores
+                      10s countdown to auto-return to menu
                                 |
-                  Enter → Restart()  |  Escape → StartScreen
+              Hands-up gesture (1s hold) → Restart()
+              Enter key → Restart()  |  Escape key → StartScreen
+              Countdown expires → StartScreen
+                                |
                       Reset players to Floor_0
                       Reset finish line ribbon
                       Regenerate doors
@@ -158,6 +162,7 @@ ZED_Rig_Mono (DontDestroyOnLoad, persists across scenes)
 
 - **Primary**: ZED 2i body tracking (pelvis for X movement, field goal gesture for jump)
 - **Fallback**: Keyboard (Player 1: A/D/W, Player 2: Arrows). Active when `useBodyTracking = false`
+- **Debug**: Q key teleports Player 1 to WinZone for instant win (GameScreen only, while Playing)
 
 ### Movement Mapping
 
@@ -226,6 +231,7 @@ UI uses App UI (UI Toolkit) with NES pixel theme, replacing the original legacy 
 - **Layouts**: UXML files define declarative UI structure, queried via `Q<T>("name")` in scripts
 - **Blinking**: Implemented via `schedule.Execute().Every(500)` toggling opacity (no CSS keyframes in 2022.3)
 - **Input passthrough**: Root panel uses `picking-mode: ignore` so gameplay clicks pass through
+- **Win panel**: Shows winner, profile photo, time, high scores, then a restart row with gesture icon (frame_last.png at 48px) + "Raise hands to play again" text, and a 10s countdown. UIManager detects field-goal gesture from any tracked body (1s hold) to restart, or auto-returns to menu on countdown expiry. Keyboard shortcuts (Enter/Escape) still work for testing.
 
 ### Restart Strategy
 

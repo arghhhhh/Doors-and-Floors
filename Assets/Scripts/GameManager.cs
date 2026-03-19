@@ -56,6 +56,12 @@ public class GameManager : MonoBehaviour
             {
                 uiManager.UpdateTimer(elapsedTime);
             }
+
+            // Debug: Q key instantly wins as Player 1
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                DebugWinPlayer1();
+            }
         }
 
         // Restart
@@ -67,7 +73,7 @@ public class GameManager : MonoBehaviour
             }
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                SceneManager.LoadScene("StartScreen");
+                ReturnToMenu();
             }
         }
     }
@@ -105,7 +111,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Restart()
+    public void ReturnToMenu()
+    {
+        if (ZEDTrackingProvider.Instance != null)
+            ZEDTrackingProvider.Instance.ClearAllAssignments();
+
+        Instance = null;
+        SceneManager.LoadScene("StartScreen");
+    }
+
+    public void Restart()
     {
         // Reset players — kills coroutines and invalidates pending teleports
         PlayerController[] players = FindObjectsOfType<PlayerController>();
@@ -153,6 +168,22 @@ public class GameManager : MonoBehaviour
         float spawnY = f0 != null ? f0.transform.position.y + f0.transform.localScale.y * 0.5f + 0.35f : 1f;
         float x = playerNumber == 1 ? -3f : 3f;
         return new Vector3(x, spawnY, 0f);
+    }
+
+    void DebugWinPlayer1()
+    {
+        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        foreach (var p in players)
+        {
+            if (p.playerNumber == 1)
+            {
+                // Place Player 1 directly in the WinZone (Y=12.5) grounded
+                p.transform.position = new Vector3(0f, 12.5f, -0.3f);
+                Rigidbody rb = p.GetComponent<Rigidbody>();
+                if (rb != null) rb.velocity = Vector3.zero;
+                return;
+            }
+        }
     }
 
     public float GetElapsedTime() => elapsedTime;

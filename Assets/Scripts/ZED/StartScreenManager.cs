@@ -41,6 +41,14 @@ public class StartScreenManager : MonoBehaviour
     [Tooltip("Tint brightness when no player is detected (0=black, 1=full)")]
     [Range(0f, 1f)]
     public float idleBrightness = 0.4f;
+    [Tooltip("HDR brightness multiplier for confirmed state (>1 = overbright)")]
+    public float confirmedBrightness = 1.4f;
+    [Tooltip("Scale punch amount added on confirm")]
+    public float scalePulseAmount = 0.8f;
+    [Tooltip("How fast the scale pulse eases back")]
+    public float scalePulseSpeed = 4f;
+    [Tooltip("How fast the sweep moves across the quad")]
+    public float sweepSpeed = 3f;
 
     [Header("Debug")]
     [Tooltip("Shows face capture debug UI: preview, sliders, and C-key recapture")]
@@ -77,6 +85,20 @@ public class StartScreenManager : MonoBehaviour
     VideoPlayer p2Video;
     Renderer p1Renderer;
     Renderer p2Renderer;
+
+    // Scale pulse state
+    float p1ScalePulse;
+    float p2ScalePulse;
+    Vector3 p1BaseScale;
+    Vector3 p2BaseScale;
+
+    // Sweep animation state (-0.5 = off, animates to 1.5)
+    float p1SweepProgress = -0.5f;
+    float p2SweepProgress = -0.5f;
+    bool p1Sweeping;
+    bool p2Sweeping;
+
+    static readonly int SweepProgressID = Shader.PropertyToID("_SweepProgress");
 
     // P1 candidate tracking
     int p1CandidateBodyId = -1;
@@ -160,39 +182,59 @@ public class StartScreenManager : MonoBehaviour
                 break;
         }
 
+        // Animate scale pulses
+        AnimateScalePulse(p1VideoQuad, ref p1ScalePulse, p1BaseScale);
+        AnimateScalePulse(p2VideoQuad, ref p2ScalePulse, p2BaseScale);
+
+        // Animate sweeps
+        AnimateSweep(p1Renderer, ref p1SweepProgress, ref p1Sweeping);
+        AnimateSweep(p2Renderer, ref p2SweepProgress, ref p2Sweeping);
+
         UpdateUI();
+    }
+
+    void AnimateScalePulse(GameObject quad, ref float pulse, Vector3 baseScale)
+    {
+        if (quad == null || pulse <= 0f) return;
+        pulse = Mathf.MoveTowards(pulse, 0f, scalePulseSpeed * Time.deltaTime);
+        float s = 1f + pulse;
+        quad.transform.localScale = baseScale * s;
+    }
+
+    void AnimateSweep(Renderer rend, ref float progress, ref bool sweeping)
+    {
+        if (!sweeping || rend == null) return;
+        progress += sweepSpeed * Time.deltaTime;
+        if (progress >= 1.5f)
+        {
+            progress = -0.5f;
+            sweeping = false;
+        }
+        rend.material.SetFloat(SweepProgressID, progress);
     }
 
     void SetupVideoQuads()
     {
+        Shader sweepShader = Shader.Find("ZedGames/SweepUnlit");
+
         if (p1VideoQuad != null)
         {
             p1Video = p1VideoQuad.GetComponent<VideoPlayer>();
             p1Renderer = p1VideoQuad.GetComponent<Renderer>();
+            if (sweepShader != null)
+                ApplySweepShader(p1Renderer, sweepShader, 0f);
         }
         if (p2VideoQuad != null)
         {
             p2Video = p2VideoQuad.GetComponent<VideoPlayer>();
             p2Renderer = p2VideoQuad.GetComponent<Renderer>();
-
-            // Apply hue shift to P2's material instance
-            if (p2HueShift > 0f)
-            {
-                Shader hueShader = Shader.Find("ZedGames/HueShiftLit");
-                if (hueShader != null)
-                {
-                    Material[] mats = p2Renderer.materials;
-                    for (int i = 0; i < mats.Length; i++)
-                    {
-                        Material clone = new Material(mats[i]);
-                        clone.shader = hueShader;
-                        clone.SetFloat("_HueShift", p2HueShift);
-                        mats[i] = clone;
-                    }
-                    p2Renderer.materials = mats;
-                }
-            }
+            if (sweepShader != null)
+                ApplySweepShader(p2Renderer, sweepShader, p2HueShift);
         }
+
+        // Cache base scales
+        if (p1VideoQuad != null) p1BaseScale = p1VideoQuad.transform.localScale;
+        if (p2VideoQuad != null) p2BaseScale = p2VideoQuad.transform.localScale;
 
         // Both start showing first-frame image, dimmed
         SetQuadIdle(p1Video, p1Renderer);
@@ -219,12 +261,40 @@ public class StartScreenManager : MonoBehaviour
         SetQuadTint(rend, 1f);
     }
 
-    void SetQuadConfirmed(VideoPlayer vp, Renderer rend)
+    void SetQuadConfirmed(VideoPlayer vp, Renderer rend, int playerNumber)
     {
         if (rend == null) return;
         if (vp != null) { vp.Stop(); vp.enabled = false; }
         SetQuadTexture(rend, frameLast);
-        SetQuadTint(rend, 1f);
+        SetQuadTint(rend, confirmedBrightness);
+
+        // Kick off scale pulse + sweep
+        if (playerNumber == 1)
+        {
+            p1ScalePulse = scalePulseAmount;
+            p1SweepProgress = -0.5f;
+            p1Sweeping = true;
+        }
+        else
+        {
+            p2ScalePulse = scalePulseAmount;
+            p2SweepProgress = -0.5f;
+            p2Sweeping = true;
+        }
+    }
+
+    void ApplySweepShader(Renderer rend, Shader shader, float hueShift)
+    {
+        Material[] mats = rend.materials;
+        for (int i = 0; i < mats.Length; i++)
+        {
+            Material clone = new Material(mats[i]);
+            clone.shader = shader;
+            clone.SetFloat("_HueShift", hueShift);
+            clone.SetFloat(SweepProgressID, -0.5f);
+            mats[i] = clone;
+        }
+        rend.materials = mats;
     }
 
     void SetQuadTexture(Renderer rend, Texture2D tex)
@@ -282,7 +352,7 @@ public class StartScreenManager : MonoBehaviour
             {
                 // P1 confirmed — capture face, freeze video, and assign
                 CapturePlayerFace(1, body);
-                SetQuadConfirmed(p1Video, p1Renderer);
+                SetQuadConfirmed(p1Video, p1Renderer, 1);
                 trackingProvider.AssignBodyToPlayer(1, p1CandidateBodyId);
                 p2Countdown = p2CountdownDuration;
                 lastUnassignedBodyCount = 0;
@@ -354,7 +424,7 @@ public class StartScreenManager : MonoBehaviour
             {
                 // P2 confirmed — capture face, freeze video, assign, and launch
                 CapturePlayerFace(2, body);
-                SetQuadConfirmed(p2Video, p2Renderer);
+                SetQuadConfirmed(p2Video, p2Renderer, 2);
                 trackingProvider.AssignBodyToPlayer(2, p2CandidateBodyId);
                 LaunchGame();
                 return;

@@ -24,21 +24,25 @@ public class HighScoreManager : MonoBehaviour
         public List<ScoreEntry> scores = new List<ScoreEntry>();
     }
 
-    ScoreData data;
-    string filePath;
+    static ScoreData data;
+    static string filePath;
+    static bool loaded;
 
     void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this);
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
-        filePath = Path.Combine(Application.persistentDataPath, FileName);
-        Load();
+        if (!loaded)
+        {
+            filePath = Path.Combine(Application.persistentDataPath, FileName);
+            Load();
+            loaded = true;
+        }
     }
 
     public bool IsHighScore(float time)

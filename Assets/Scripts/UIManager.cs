@@ -2,11 +2,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.AppUI.UI;
+using sl;
 
 public class UIManager : MonoBehaviour
 {
     [Header("High Score Entry Template")]
     [SerializeField] VisualTreeAsset highScoreEntryTemplate;
+
+    [Header("Win Screen")]
+    [Tooltip("Last-frame gesture image shown next to restart prompt")]
+    public Texture2D gestureIcon;
+    [Tooltip("Countdown duration before auto-return to menu")]
+    public float winCountdownDuration = 10f;
 
     // UI Toolkit elements
     Heading timerEl;
@@ -17,9 +24,17 @@ public class UIManager : MonoBehaviour
     Unity.AppUI.UI.Text highScoreLabelEl;
     VisualElement highScoreListEl;
     Unity.AppUI.UI.Text instructionsEl;
+    VisualElement gestureIconEl;
+    Unity.AppUI.UI.Text countdownEl;
 
     // Blink state for high score label
     bool highScoreLabelVisible = true;
+
+    // Win countdown state
+    float winCountdown;
+    bool winCountdownActive;
+    float gestureHoldTime;
+    const float gestureHoldRequired = 1f;
 
     void Awake()
     {
@@ -35,6 +50,66 @@ public class UIManager : MonoBehaviour
         highScoreLabelEl = root.Q<Unity.AppUI.UI.Text>("high-score-label");
         highScoreListEl = root.Q<VisualElement>("high-score-list");
         instructionsEl = root.Q<Unity.AppUI.UI.Text>("instructions-text");
+        gestureIconEl = root.Q<VisualElement>("gesture-icon");
+        countdownEl = root.Q<Unity.AppUI.UI.Text>("countdown-text");
+    }
+
+    void Update()
+    {
+        if (!winCountdownActive) return;
+
+        // Countdown to auto-return to menu
+        winCountdown -= Time.deltaTime;
+        if (countdownEl != null)
+            countdownEl.text = $"Returning to menu in {Mathf.CeilToInt(Mathf.Max(0f, winCountdown))}s";
+
+        if (winCountdown <= 0f)
+        {
+            winCountdownActive = false;
+            GameManager.Instance?.ReturnToMenu();
+            return;
+        }
+
+        // Check for hands-up gesture from any tracked body
+        CheckGestureRestart();
+    }
+
+    void CheckGestureRestart()
+    {
+        ZEDTrackingProvider provider = ZEDTrackingProvider.Instance;
+        if (provider == null || !provider.IsZEDReady) return;
+
+        var bodies = provider.GetAllCurrentBodies();
+        bool anyGesture = false;
+
+        foreach (var kvp in bodies)
+        {
+            DetectedBody body = kvp.Value;
+            int count = body.rawBodyData.keypoint.Length;
+            Vector3[] keypoints = new Vector3[count];
+            for (int i = 0; i < count; i++)
+                keypoints[i] = provider.GetKeypointWorld(body, i);
+
+            if (GestureDetector.IsFieldGoalGesture(keypoints, body.rawBodyData.keypointConfidence))
+            {
+                anyGesture = true;
+                break;
+            }
+        }
+
+        if (anyGesture)
+        {
+            gestureHoldTime += Time.deltaTime;
+            if (gestureHoldTime >= gestureHoldRequired)
+            {
+                winCountdownActive = false;
+                GameManager.Instance?.Restart();
+            }
+        }
+        else
+        {
+            gestureHoldTime = 0f;
+        }
     }
 
     void Start()
@@ -49,6 +124,8 @@ public class UIManager : MonoBehaviour
 
         if (highScoreListEl != null)
             highScoreListEl.Clear();
+
+        winCountdownActive = false;
     }
 
     public void UpdateTimer(float time)
@@ -110,8 +187,16 @@ public class UIManager : MonoBehaviour
 
         BuildHighScoreList();
 
+        if (gestureIconEl != null && gestureIcon != null)
+            gestureIconEl.style.backgroundImage = new StyleBackground(gestureIcon);
+
         if (instructionsEl != null)
-            instructionsEl.text = "Press ENTER to play again\nPress ESC for main menu";
+            instructionsEl.text = "Raise hands to play again";
+
+        // Start countdown
+        winCountdown = winCountdownDuration;
+        winCountdownActive = true;
+        gestureHoldTime = 0f;
     }
 
     void BuildHighScoreList()
