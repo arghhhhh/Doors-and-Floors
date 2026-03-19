@@ -102,6 +102,10 @@ public class StartScreenManager : MonoBehaviour
     Renderer p1Renderer;
     Renderer p2Renderer;
 
+    // Face preview quads (shown above video quads after player confirmation)
+    GameObject p1FaceQuad;
+    GameObject p2FaceQuad;
+
     // Scale pulse state
     float p1ScalePulse;
     float p2ScalePulse;
@@ -205,6 +209,9 @@ public class StartScreenManager : MonoBehaviour
                 HandleWaitingForP2Confirm();
                 break;
             case LobbyState.Launching:
+                p2Countdown -= Time.deltaTime;
+                if (p2Countdown <= 0f)
+                    LaunchGame();
                 break;
         }
 
@@ -259,6 +266,10 @@ public class StartScreenManager : MonoBehaviour
         // Cache base scales
         if (p1VideoQuad != null) p1BaseScale = p1VideoQuad.transform.localScale;
         if (p2VideoQuad != null) p2BaseScale = p2VideoQuad.transform.localScale;
+
+        // Create face preview quads above each video quad
+        p1FaceQuad = CreateFacePreviewQuad(p1VideoQuad);
+        p2FaceQuad = CreateFacePreviewQuad(p2VideoQuad);
 
         // Both start showing first-frame image, dimmed
         SetQuadIdle(p1Video, p1Renderer);
@@ -332,6 +343,78 @@ public class StartScreenManager : MonoBehaviour
         if (rend == null) return;
         Color c = new Color(brightness, brightness, brightness, 1f);
         rend.material.SetColor("_BaseColor", c);
+    }
+
+    // ── Face preview quads ──────────────────────────────────────────
+
+    GameObject CreateFacePreviewQuad(GameObject videoQuad)
+    {
+        if (videoQuad == null) return null;
+
+        GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        quad.name = "FacePreview";
+        quad.transform.SetParent(videoQuad.transform, false);
+
+        Destroy(quad.GetComponent<Collider>());
+
+        // NoPixel layer so it renders with the correct camera
+        quad.layer = LayerMask.NameToLayer("NoPixel");
+
+        quad.transform.localPosition = new Vector3(0f, 0.4f, 0.2f);
+        quad.transform.localScale = new Vector3(0.15f, 0.15f, 1f);
+        quad.transform.localRotation = Quaternion.identity;
+
+        // Border quad behind the face (slightly larger, gold)
+        GameObject border = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        border.name = "FaceBorder";
+        border.layer = LayerMask.NameToLayer("NoPixel");
+        border.transform.SetParent(quad.transform, false);
+        Destroy(border.GetComponent<Collider>());
+        float borderScale = 1.12f;
+        border.transform.localScale = new Vector3(borderScale, borderScale, 1f);
+        border.transform.localPosition = new Vector3(0f, 0f, 0.01f);
+
+        Renderer borderRend = border.GetComponent<Renderer>();
+        if (sweepShader != null)
+        {
+            Material borderMat = new Material(sweepShader);
+            borderMat.SetColor("_BaseColor", new Color(0.85f, 0.65f, 0f)); // gold
+            borderMat.SetFloat("_HueShift", 0f);
+            borderMat.SetFloat(SweepProgressID, -0.5f);
+            borderRend.material = borderMat;
+        }
+
+        // Face material — use sweep shader with no sweep, white tint
+        Renderer faceRend = quad.GetComponent<Renderer>();
+        if (sweepShader != null)
+        {
+            Material faceMat = new Material(sweepShader);
+            faceMat.SetColor("_BaseColor", Color.white);
+            faceMat.SetFloat("_HueShift", 0f);
+            faceMat.SetFloat(SweepProgressID, -0.5f);
+            faceRend.material = faceMat;
+        }
+
+        quad.SetActive(false);
+        return quad;
+    }
+
+    void ShowFacePreview(int playerNumber, Texture2D face)
+    {
+        GameObject faceQuad = playerNumber == 1 ? p1FaceQuad : p2FaceQuad;
+        if (faceQuad == null || face == null) return;
+
+        Renderer rend = faceQuad.GetComponent<Renderer>();
+        if (rend != null)
+            rend.material.SetTexture("_BaseMap", face);
+        faceQuad.SetActive(true);
+    }
+
+    void HideFacePreview(int playerNumber)
+    {
+        GameObject faceQuad = playerNumber == 1 ? p1FaceQuad : p2FaceQuad;
+        if (faceQuad != null)
+            faceQuad.SetActive(false);
     }
 
     // ── Body evaluation helpers ──────────────────────────────────────
@@ -486,6 +569,7 @@ public class StartScreenManager : MonoBehaviour
             {
                 p1CandidateBodyId = -1;
                 SetQuadIdle(p1Video, p1Renderer);
+                HideFacePreview(1);
                 SFXManager.Instance?.Play(SFXManager.Instance?.sfxPlayerLost);
                 CurrentState = LobbyState.WaitingForP1Detection;
                 return;
@@ -569,6 +653,7 @@ public class StartScreenManager : MonoBehaviour
             {
                 p2CandidateBodyId = -1;
                 SetQuadIdle(p2Video, p2Renderer);
+                HideFacePreview(2);
                 SFXManager.Instance?.Play(SFXManager.Instance?.sfxPlayerLost);
                 CurrentState = LobbyState.WaitingForP2;
                 return;
@@ -590,12 +675,13 @@ public class StartScreenManager : MonoBehaviour
             p2GestureHoldTime += Time.deltaTime;
             if (p2GestureHoldTime >= confirmHoldDuration)
             {
-                // P2 confirmed — capture face, freeze video, assign, and launch
+                // P2 confirmed — capture face, freeze video, assign, and start countdown
                 CapturePlayerFace(2, candidate);
                 SetQuadConfirmed(p2Video, p2Renderer, 2);
                 SFXManager.Instance?.Play(SFXManager.Instance?.voiceP2Activated);
                 trackingProvider.AssignBodyToPlayer(2, p2CandidateBodyId);
-                LaunchGame();
+                p2Countdown = 6f;
+                CurrentState = LobbyState.Launching;
                 return;
             }
         }
@@ -620,6 +706,7 @@ public class StartScreenManager : MonoBehaviour
         if (face != null)
         {
             trackingProvider.SetPlayerProfilePhoto(playerNumber, face);
+            ShowFacePreview(playerNumber, face);
             #if UNITY_EDITOR
             if (debugFaceCrop)
             {
@@ -770,11 +857,12 @@ public class StartScreenManager : MonoBehaviour
 
         if (countdownEl != null)
         {
-            if (CurrentState == LobbyState.WaitingForP2 || CurrentState == LobbyState.WaitingForP2Confirm)
+            if (CurrentState == LobbyState.WaitingForP2 || CurrentState == LobbyState.WaitingForP2Confirm
+                || CurrentState == LobbyState.Launching)
             {
                 bool p2Joined = trackingProvider != null && trackingProvider.IsPlayerAssigned(2);
                 string mode = p2Joined ? "multiplayer" : "solo";
-                countdownEl.text = $"Starting {mode} in {Mathf.CeilToInt(p2Countdown)}s";
+                countdownEl.text = $"Starting {mode} in {Mathf.CeilToInt(Mathf.Max(0f, p2Countdown))}s";
                 countdownEl.style.display = DisplayStyle.Flex;
             }
             else

@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
     [Tooltip("Delay in seconds before the player reappears at the destination door")]
     public float teleportDelay = 0.3f;
 
+    [Header("Time Limit")]
+    [Tooltip("Maximum game duration in seconds before auto-returning to menu (0 = no limit)")]
+    public float maxGameTime = 300f;
+
     float elapsedTime;
     int winnerPlayerNumber;
 
@@ -90,6 +94,13 @@ public class GameManager : MonoBehaviour
             if (uiManager != null)
             {
                 uiManager.UpdateTimer(elapsedTime);
+            }
+
+            // Time limit — return to menu if exceeded
+            if (maxGameTime > 0f && elapsedTime >= maxGameTime)
+            {
+                ReturnToMenu();
+                return;
             }
 
             // Debug: Q key instantly wins as Player 1
