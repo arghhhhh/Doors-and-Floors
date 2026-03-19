@@ -103,6 +103,7 @@
     border-color: var(--nes-white);
     margin-right: 10px;
     flex-shrink: 0;
+    background-image: url('/Assets/Media/frame_last.png');
 }
 
 #instructions-text {

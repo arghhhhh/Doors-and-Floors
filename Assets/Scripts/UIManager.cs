@@ -187,9 +187,6 @@ public class UIManager : MonoBehaviour
 
         BuildHighScoreList();
 
-        if (gestureIconEl != null && gestureIcon != null)
-            gestureIconEl.style.backgroundImage = new StyleBackground(gestureIcon);
-
         if (instructionsEl != null)
             instructionsEl.text = "Raise hands to play again";
 
