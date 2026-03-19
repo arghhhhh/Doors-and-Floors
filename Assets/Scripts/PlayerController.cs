@@ -92,6 +92,27 @@ public class PlayerController : MonoBehaviour
         profileRenderer.material = mat;
     }
 
+    /// <summary>
+    /// Updates the profile photo at runtime (e.g. from a ZED face capture).
+    /// Rebuilds the floating quad if needed.
+    /// </summary>
+    public void SetProfilePhoto(Texture2D photo)
+    {
+        profilePhoto = photo;
+
+        if (profileQuad != null)
+        {
+            // Update existing quad's texture
+            if (profileRenderer != null)
+                profileRenderer.material.mainTexture = photo;
+        }
+        else
+        {
+            // Quad wasn't created in Awake (no photo was assigned then), create it now
+            CreateProfileQuad();
+        }
+    }
+
     void FixedUpdate()
     {
         CheckGround();

@@ -26,6 +26,9 @@ public class ZEDTrackingProvider : MonoBehaviour
     // Last known world X per player (for re-identification)
     Dictionary<int, float> lastKnownPlayerX = new Dictionary<int, float>();
 
+    // Player number → captured face photo (persists across scenes via DontDestroyOnLoad)
+    Dictionary<int, Texture2D> playerProfilePhotos = new Dictionary<int, Texture2D>();
+
     [Header("Re-identification")]
     [Tooltip("Max distance in meters to auto-reassign a lost body")]
     public float reidentificationRadius = 1.0f;
@@ -241,6 +244,31 @@ public class ZEDTrackingProvider : MonoBehaviour
     {
         playerBodyAssignments.Clear();
         lastKnownPlayerX.Clear();
+        foreach (var tex in playerProfilePhotos.Values)
+        {
+            if (tex != null) Destroy(tex);
+        }
+        playerProfilePhotos.Clear();
+    }
+
+    /// <summary>
+    /// Stores a captured profile photo for a player. Persists across scene loads.
+    /// </summary>
+    public void SetPlayerProfilePhoto(int playerNumber, Texture2D photo)
+    {
+        if (playerProfilePhotos.TryGetValue(playerNumber, out Texture2D old) && old != null)
+            Destroy(old);
+        playerProfilePhotos[playerNumber] = photo;
+        Debug.Log($"[ZEDTrackingProvider] Stored profile photo for P{playerNumber} ({photo.width}x{photo.height})");
+    }
+
+    /// <summary>
+    /// Returns the captured profile photo for a player, or null if none captured.
+    /// </summary>
+    public Texture2D GetPlayerProfilePhoto(int playerNumber)
+    {
+        playerProfilePhotos.TryGetValue(playerNumber, out Texture2D photo);
+        return photo;
     }
 
     public DetectedBody GetBodyForPlayer(int playerNumber)

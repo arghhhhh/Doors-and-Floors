@@ -89,6 +89,11 @@ public class GameScreenManager : MonoBehaviour
 
         pc.useBodyTracking = true;
 
+        // Apply captured profile photo from lobby (overrides inspector-assigned demo photo)
+        Texture2D capturedPhoto = provider.GetPlayerProfilePhoto(playerNumber);
+        if (capturedPhoto != null)
+            pc.SetProfilePhoto(capturedPhoto);
+
         // Attach BodyTrackingInput
         BodyTrackingInput input = playerObj.GetComponent<BodyTrackingInput>();
         if (input == null)

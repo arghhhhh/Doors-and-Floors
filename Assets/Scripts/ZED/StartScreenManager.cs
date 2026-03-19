@@ -48,6 +48,10 @@ public class StartScreenManager : MonoBehaviour
     // Blink state
     bool promptVisible = true;
 
+    // Debug face preview textures
+    Texture2D p1FacePreview;
+    Texture2D p2FacePreview;
+
     // P1 candidate tracking
     int p1CandidateBodyId = -1;
     float p1GestureHoldTime;
@@ -181,7 +185,8 @@ public class StartScreenManager : MonoBehaviour
             p1GestureHoldTime += Time.deltaTime;
             if (p1GestureHoldTime >= confirmHoldDuration)
             {
-                // P1 confirmed
+                // P1 confirmed — capture face and assign
+                CapturePlayerFace(1, body);
                 trackingProvider.AssignBodyToPlayer(1, p1CandidateBodyId);
                 p2Countdown = p2CountdownDuration;
                 lastUnassignedBodyCount = 0;
@@ -249,7 +254,8 @@ public class StartScreenManager : MonoBehaviour
             p2GestureHoldTime += Time.deltaTime;
             if (p2GestureHoldTime >= confirmHoldDuration)
             {
-                // P2 confirmed — assign and launch
+                // P2 confirmed — capture face, assign, and launch
+                CapturePlayerFace(2, body);
                 trackingProvider.AssignBodyToPlayer(2, p2CandidateBodyId);
                 LaunchGame();
                 return;
@@ -264,6 +270,24 @@ public class StartScreenManager : MonoBehaviour
         if (p2Countdown <= 0f)
         {
             LaunchGame();
+        }
+    }
+
+    void CapturePlayerFace(int playerNumber, DetectedBody body)
+    {
+        if (trackingProvider == null || trackingProvider.zedManager == null) return;
+
+        Texture2D face = FaceCaptureHelper.CaptureFace(trackingProvider.zedManager, body);
+        if (face != null)
+        {
+            trackingProvider.SetPlayerProfilePhoto(playerNumber, face);
+            if (playerNumber == 1) p1FacePreview = face;
+            else if (playerNumber == 2) p2FacePreview = face;
+            Debug.Log($"[StartScreenManager] Captured face for P{playerNumber}");
+        }
+        else
+        {
+            Debug.LogWarning($"[StartScreenManager] Failed to capture face for P{playerNumber}");
         }
     }
 
@@ -283,6 +307,28 @@ public class StartScreenManager : MonoBehaviour
             worldKeypoints[i] = trackingProvider.GetKeypointWorld(body, i);
         }
         return worldKeypoints;
+    }
+
+    void OnGUI()
+    {
+        // Debug preview: show captured face photos in the top-right corner
+        float previewSize = 128f;
+        float padding = 10f;
+        float x = Screen.width - previewSize - padding;
+
+        if (p1FacePreview != null)
+        {
+            float y = padding;
+            GUI.Box(new UnityEngine.Rect(x - 4, y - 20, previewSize + 8, previewSize + 28), "P1 Face");
+            GUI.DrawTexture(new UnityEngine.Rect(x, y, previewSize, previewSize), p1FacePreview);
+        }
+
+        if (p2FacePreview != null)
+        {
+            float y = padding + previewSize + 40f;
+            GUI.Box(new UnityEngine.Rect(x - 4, y - 20, previewSize + 8, previewSize + 28), "P2 Face");
+            GUI.DrawTexture(new UnityEngine.Rect(x, y, previewSize, previewSize), p2FacePreview);
+        }
     }
 
     void UpdateUI()
