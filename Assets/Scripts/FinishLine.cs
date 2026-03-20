@@ -21,6 +21,8 @@ public class FinishLine : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (sliced) return;
+        if (GameManager.Instance == null || GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+            return;
 
         PlayerController player = other.GetComponent<PlayerController>();
         if (player == null) return;
