@@ -115,6 +115,7 @@ InitTestScene*.unity*
 !.claude/agents/
 .claude/agents/*
 !.claude/agents/unity.md
+!.claude/rules/
 
 #unity-cli
 .unity/cache/
