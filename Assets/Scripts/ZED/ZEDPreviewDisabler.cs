@@ -1,4 +1,5 @@
 using UnityEngine;
+using sl;
 
 /// <summary>
 /// Disables the ZED camera preview (Camera_Left + Frame) after the ZED initializes.

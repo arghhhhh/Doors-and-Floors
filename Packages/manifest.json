@@ -1,8 +1,8 @@
 {
   "dependencies": {
-    "com.akiojin.unity-cli-bridge": "https://github.com/akiojin/unity-cli.git?path=UnityCliBridge/Packages/unity-cli-bridge",
+    "com.akiojin.unity-cli-bridge": "https://github.com/arghhhhh/unity-cli.git?path=UnityCliBridge/Packages/unity-cli-bridge#d53ea1dbcbfaff82e45dbb5090acbe4fa287832c",
     "com.boxqkrtm.ide.cursor": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
-    "com.stereolabs.zed": "https://github.com/arghhhhh/zed-unity.git?path=ZEDCamera/Assets",
+    "com.stereolabs.zed": "https://github.com/stereolabs/zed-unity.git?path=ZEDCamera/Assets#v5.5.0",
     "com.unity.collab-proxy": "2.11.4",
     "com.unity.dt.app-ui": "2.2.0-pre.6",
     "com.unity.ide.vscode": "1.2.5",

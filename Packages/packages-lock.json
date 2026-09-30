@@ -1,16 +1,16 @@
 {
   "dependencies": {
     "com.akiojin.unity-cli-bridge": {
-      "version": "https://github.com/akiojin/unity-cli.git?path=UnityCliBridge/Packages/unity-cli-bridge",
+      "version": "https://github.com/arghhhhh/unity-cli.git?path=UnityCliBridge/Packages/unity-cli-bridge#d53ea1dbcbfaff82e45dbb5090acbe4fa287832c",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.test-framework": "1.1.33",
         "com.unity.inputsystem": "1.14.2",
-        "com.unity.recorder": "4.0.0",
-        "com.unity.addressables": "1.22.3"
+        "com.unity.ugui": "1.0.0"
       },
-      "hash": "ee799341b04a5fc5fab2cdeded83545eaeea60c3"
+      "hash": "d53ea1dbcbfaff82e45dbb5090acbe4fa287832c"
     },
     "com.boxqkrtm.ide.cursor": {
       "version": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
@@ -22,7 +22,7 @@
       "hash": "fd8ff1fb700caf062eb5cce364c1d0a85f99ebe6"
     },
     "com.stereolabs.zed": {
-      "version": "https://github.com/arghhhhh/zed-unity.git?path=ZEDCamera/Assets",
+      "version": "https://github.com/stereolabs/zed-unity.git?path=ZEDCamera/Assets#v5.5.0",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -31,21 +31,7 @@
         "com.unity.modules.animation": "1.0.0",
         "com.unity.modules.imageconversion": "1.0.0"
       },
-      "hash": "14b6edfb8c0e423f9850f2156c10916a659ab2bf"
-    },
-    "com.unity.addressables": {
-      "version": "1.22.3",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.modules.assetbundle": "1.0.0",
-        "com.unity.modules.jsonserialize": "1.0.0",
-        "com.unity.modules.imageconversion": "1.0.0",
-        "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.scriptablebuildpipeline": "1.21.25",
-        "com.unity.modules.unitywebrequestassetbundle": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      "hash": "8379f17aaede3dfe87b59315b10a644986369780"
     },
     "com.unity.burst": {
       "version": "1.8.21",
@@ -112,15 +98,6 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.recorder": {
-      "version": "4.0.3",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.timeline": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.render-pipelines.core": {
       "version": "14.0.12",
       "depth": 1,
@@ -151,13 +128,6 @@
       "dependencies": {
         "com.unity.render-pipelines.core": "14.0.10"
       }
-    },
-    "com.unity.scriptablebuildpipeline": {
-      "version": "1.21.25",
-      "depth": 2,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
     },
     "com.unity.searcher": {
       "version": "4.9.2",
