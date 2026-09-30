@@ -5,8 +5,8 @@ A 2-player racing game where players compete to climb from the bottom floor to t
 
 ## Tech Stack
 - Unity 2022.3 (URP)
-- ZED SDK via custom UPM fork (https://github.com/arghhhhh/zed-unity)
-- App UI (UI Toolkit) with NES pixel theme (PressStart2P font)
+- ZED SDK 5.5 via upstream UPM package `stereolabs/zed-unity#v5.5.0`. The package tag must match the installed ZED SDK version, or `sl_unitywrapper.dll` fails to load and the editor crashes on open. Bump the tag in `Packages/manifest.json` whenever the SDK is upgraded.
+- App UI 2.2.4 (UI Toolkit, from the Unity registry) with NES pixel theme (PressStart2P font)
 - C# with Animator-driven character animations (Generic rig Hazmat Man)
 
 ## Game Flow
@@ -29,12 +29,9 @@ StartScreen (lobby with gesture-based player registration) → GameScreen (7-flo
 For any Unity work, use the global `unity` agent. It handles scene inspection, GameObject editing, C# code, prefabs, assets, input system, testing, and UI automation.
 
 ## Documentation
-Detailed docs live in `docs/` — update them when making significant changes:
-- `docs/ARCHITECTURE.md` — Full technical architecture
-- `docs/SCRIPTS-API.md` — Complete API reference for all scripts
-- `docs/SCENE-SETUP.md` — Scene hierarchies and configuration
-- `docs/APP-UI-MIGRATION-PLAN.md` — UI migration history (reference only)
-- `docs/CUSTOM-PACKAGES-SETUP.md` — Package installation notes
+Detailed docs live in `Docs/` — update them when making significant changes:
+- `Docs/ARCHITECTURE.md` — Full technical architecture
+- `Docs/SCENE-SETUP.md` — Scene hierarchies and configuration
 
 ## Build & Test
 - Open in Unity 2022.3

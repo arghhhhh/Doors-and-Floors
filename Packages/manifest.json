@@ -4,7 +4,7 @@
     "com.boxqkrtm.ide.cursor": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
     "com.stereolabs.zed": "https://github.com/stereolabs/zed-unity.git?path=ZEDCamera/Assets#v5.5.0",
     "com.unity.collab-proxy": "2.11.4",
-    "com.unity.dt.app-ui": "2.2.0-pre.6",
+    "com.unity.dt.app-ui": "2.2.4",
     "com.unity.ide.vscode": "1.2.5",
     "com.unity.render-pipelines.universal": "14.0.12",
     "com.unity.test-framework": "1.1.33",

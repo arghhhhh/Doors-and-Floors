@@ -18,23 +18,9 @@ Assets/
   Models/
     FinishLineRibbon.fbx            # Finish line ribbon mesh
     Meshy_AI_hazmat_man_1_biped_separate/  # Hazmat Man character (mesh, animations, textures)
-  Scripts/
-    GameManager.cs          # Singleton. State machine, timer, win/restart flow
-    PlayerController.cs     # Movement, jump, portal animation, profile photo quad
-    PortalDoor.cs           # Trigger-based teleport with spiral shader and swivel animation
-    ConveyorBelt.cs         # Moves child doors horizontally with ghost-clone wraparound
-    DoorPairGenerator.cs    # Procedural door/belt generation with winnability guarantee
-    WinTrigger.cs           # Detects player landing on top floor
-    FinishLine.cs           # Ribbon slice effect when first player crosses finish
-    UIManager.cs            # Timer HUD, win panel, high scores (App UI / UI Toolkit)
-    HighScoreManager.cs     # Top 10 scores persisted as JSON with profile photos
-    ViewModeToggle.cs       # Editor utility: toggle OpenPose layer visibility on cameras
-    ZED/
-      ZEDTrackingProvider.cs  # Persistent singleton. Body tracking data hub + player assignments
-      GestureDetector.cs      # Static utility for gesture recognition (field goal)
-      StartScreenManager.cs   # Lobby state machine for player registration via gesture
-      BodyTrackingInput.cs    # Per-player input adapter (body tracking → PlayerController)
-      GameScreenManager.cs    # Game scene orchestrator. Activates tracked players, handles loss
+  Scripts/                  # Gameplay scripts; see .claude/rules/scripts-map.md for the per-script index
+    Editor/                 # Editor-only menu utilities
+    ZED/                    # Body tracking, lobby flow, per-player input
   Shaders/
     PortalSpiral.shader       # Animated spiral effect for portal doors
     FinishLineCheckered.shader  # Checkered pattern with wind animation and clip-side slicing
@@ -58,9 +44,6 @@ Assets/
 Docs/
   ARCHITECTURE.md           # This file
   SCENE-SETUP.md            # Scene hierarchy and object configuration
-  SCRIPTS-API.md            # Public API reference for all scripts
-  APP-UI-MIGRATION-PLAN.md  # Completed migration plan (legacy Canvas → App UI)
-  CUSTOM-PACKAGES-SETUP.md  # Manual package installation notes
 ```
 
 ## Game Flow

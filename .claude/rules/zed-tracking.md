@@ -8,10 +8,8 @@ This rule loads when working on ZED-related scripts.
 
 ## ZED SDK Setup
 - ZED 2i stereo camera with body tracking
-- Plugin: custom UPM fork at https://github.com/arghhhhh/zed-unity (master branch)
-- Local fork clone: `C:\Users\Joss_loaner\Desktop\Projects\Mine\zed-unity`
-- Plugin source: `ZEDCamera/Assets/` in the fork repo
-- UPM URL in manifest: `https://github.com/arghhhhh/zed-unity.git?path=ZEDCamera/Assets`
+- Plugin: upstream UPM package `https://github.com/stereolabs/zed-unity.git?path=ZEDCamera/Assets#v5.5.0`. The tag must match the installed ZED SDK version.
+- ZED 5.x types live in `namespace sl`, so scripts using `ZEDManager`, `BodyTrackingFrame`, etc. need `using sl;`
 
 ## Architecture
 - `ZEDTrackingProvider` is a persistent singleton (DontDestroyOnLoad) on the `ZED_Rig_Mono` GameObject

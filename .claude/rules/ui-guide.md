@@ -9,7 +9,7 @@ paths:
 This rule loads when working on UI files or UI-related scripts.
 
 ## Stack
-- App UI (com.unity.dt.app-ui 2.2.0-pre.6) built on UI Toolkit
+- App UI (com.unity.dt.app-ui 2.2.4) built on UI Toolkit
 - NES pixel theme using PressStart2P-Regular.ttf (Google Fonts, OFL license)
 - PPU color palette with zero border-radius for authentic NES look
 
@@ -39,4 +39,4 @@ Assets/UI/
 - `StartScreenManager.cs` — StartScreen UI: status messages, countdown, player prompts
 
 ## App UI Skills
-The App UI plugin is enabled in `.claude/settings.json`. Invoke App UI skills (app-ui, app-ui-mvvm, app-ui-theming, app-ui-navigation, app-ui-redux) before writing UI code.
+The App UI skills are installed globally (claude-skills). Invoke them (app-ui, app-ui-mvvm, app-ui-theming, app-ui-navigation, app-ui-redux) before writing UI code.

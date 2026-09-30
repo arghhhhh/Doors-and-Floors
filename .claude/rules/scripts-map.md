@@ -1,6 +1,6 @@
 # Scripts Quick Reference
 
-When modifying scripts, check `docs/SCRIPTS-API.md` for full method signatures and field details.
+Read the script itself for method signatures and field details. Keep this table current when adding, removing or renaming scripts.
 
 ## Core Gameplay (Assets/Scripts/)
 | Script | Role |
@@ -16,6 +16,7 @@ When modifying scripts, check `docs/SCRIPTS-API.md` for full method signatures a
 | `HighScoreManager.cs` | Top 10 persistence as JSON with base64 PNG photos |
 | `SFXManager.cs` | Sound effects and voice line playback |
 | `ViewModeToggle.cs` | Editor utility: toggle OpenPose skeleton visibility |
+| `Editor/CreateVideoRenderTexture.cs` | Menu item `ZedGames/Fix VideoQuad Color Banding`: builds the ARGBHalf RenderTexture for the StartScreen video quad |
 
 ## ZED Integration (Assets/Scripts/ZED/)
 | Script | Role |
@@ -28,6 +29,7 @@ When modifying scripts, check `docs/SCRIPTS-API.md` for full method signatures a
 | `BodyTrackingRecorder.cs` | Records body tracking data for replay/testing |
 | `TrackingLostOverlay.cs` | Visual feedback when player tracking is lost |
 | `FaceCaptureHelper.cs` | Captures player face photos for high score display |
+| `ZEDPreviewDisabler.cs` | Hides the ZED camera preview (Camera_Left + Frame) once the ZED is ready; goes on ZED_Rig_Mono |
 
 ## Key Relationships
 - `GameManager` owns game state; `GameScreenManager` orchestrates scene setup
