@@ -250,6 +250,8 @@ In-place reset (no scene reload) to preserve body tracking state:
 7. Double-verify player positions on Floor_0
 8. Set state to Playing
 
+Because the scene never reloads, nothing unloads runtime assets between rounds, so anything created per round must be destroyed explicitly: PortalDoor destroys its spiral material instance in `OnDestroy`, FinishLine destroys each ribbon half's material with the half, and UIManager destroys decoded leaderboard photos whenever the score list is cleared.
+
 ### High Score Persistence
 
 - JSON file at `Application.persistentDataPath/highscores.json`

@@ -31,6 +31,8 @@ public class PortalDoor : MonoBehaviour
 
     float lastTeleportTime = -1f;
     Renderer doorRenderer;
+    // Per-door instance; doors are regenerated on every restart, so it's destroyed with the door
+    Material spiralMaterialInstance;
 
     void Awake()
     {
@@ -63,6 +65,7 @@ public class PortalDoor : MonoBehaviour
         if (sharedSpiralMaterial != null)
         {
             Material mat = new Material(sharedSpiralMaterial);
+            spiralMaterialInstance = mat;
             mat.SetColor("_BaseColor", doorColor);
             mat.SetFloat("_Speed", spiralSpeed);
             mat.SetFloat("_NumArms", spiralArms);
@@ -97,6 +100,12 @@ public class PortalDoor : MonoBehaviour
 
         SFXManager.Instance?.Play(SFXManager.Instance?.sfxTeleport);
         player.TeleportTo(transform, dest);
+    }
+
+    void OnDestroy()
+    {
+        if (spiralMaterialInstance != null)
+            Destroy(spiralMaterialInstance);
     }
 
     public void SetColor(Color color)

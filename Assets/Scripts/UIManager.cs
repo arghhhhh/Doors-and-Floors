@@ -41,6 +41,10 @@ public class UIManager : MonoBehaviour
     IVisualElementScheduledItem highScoreBlink;
     IVisualElementScheduledItem instructionsBlink;
 
+    // Leaderboard photos decoded for the current win panel; destroyed when the list is
+    // cleared since restarts reuse the scene and would otherwise keep every decode
+    readonly List<Texture2D> leaderboardPhotos = new List<Texture2D>();
+
     // Win countdown state
     float winCountdown;
     bool winCountdownActive;
@@ -162,8 +166,7 @@ public class UIManager : MonoBehaviour
         if (winPanelEl != null)
             winPanelEl.style.display = DisplayStyle.None;
 
-        if (highScoreListEl != null)
-            highScoreListEl.Clear();
+        ClearHighScoreList();
 
         highScoreBlink?.Pause();
         instructionsBlink?.Pause();
@@ -327,10 +330,19 @@ public class UIManager : MonoBehaviour
         gestureHoldTime = 0f;
     }
 
-    void BuildHighScoreList()
+    void ClearHighScoreList()
     {
         if (highScoreListEl != null)
             highScoreListEl.Clear();
+
+        foreach (var tex in leaderboardPhotos)
+            if (tex != null) Destroy(tex);
+        leaderboardPhotos.Clear();
+    }
+
+    void BuildHighScoreList()
+    {
+        ClearHighScoreList();
 
         if (HighScoreManager.Instance == null) return;
         if (highScoreListEl == null) return;
@@ -365,8 +377,11 @@ public class UIManager : MonoBehaviour
 
             // Set photo
             Texture2D photo2d = HighScoreManager.Instance.LoadProfilePhoto(scores[i]);
-            if (photo != null && photo2d != null)
+            if (photo2d != null)
+            {
+                leaderboardPhotos.Add(photo2d);
                 photo.style.backgroundImage = new StyleBackground(photo2d);
+            }
 
             // Set time
             int m = (int)(scores[i].time / 60f);
@@ -376,5 +391,10 @@ public class UIManager : MonoBehaviour
 
             highScoreListEl.Add(entry);
         }
+    }
+
+    void OnDestroy()
+    {
+        ClearHighScoreList();
     }
 }

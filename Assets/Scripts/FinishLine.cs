@@ -84,18 +84,28 @@ public class FinishLine : MonoBehaviour
         rb.isKinematic = false;
         Destroy(half.GetComponent<Collider>());
 
-        // Clean up after a few seconds
+        // Clean up after a few seconds (the material too — restarts reuse the scene)
         Destroy(half, 5f);
+        Destroy(mat, 5f);
 
         return half;
+    }
+
+    static void DestroyHalf(GameObject half)
+    {
+        if (half == null) return;
+        MeshRenderer mr = half.GetComponent<MeshRenderer>();
+        if (mr != null && mr.sharedMaterial != null)
+            Destroy(mr.sharedMaterial);
+        Destroy(half);
     }
 
     public void ResetFinishLine()
     {
         sliced = false;
 
-        if (leftHalf != null) Destroy(leftHalf);
-        if (rightHalf != null) Destroy(rightHalf);
+        DestroyHalf(leftHalf);
+        DestroyHalf(rightHalf);
 
         if (ribbonRenderer != null)
             ribbonRenderer.enabled = true;
