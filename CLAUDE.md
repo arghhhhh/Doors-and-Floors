@@ -1,12 +1,13 @@
-# ZedGames Unity Project
+# Doors & Floors (ZedGames Unity Project)
 
 ## What This Is
-A 2-player racing game (or 1 player vs a CPU when nobody else joins) where players compete to climb from the bottom floor to the top floor of a building by jumping into color-coded portal doors on conveyor belts. Uses ZED 2i stereo camera body tracking for player control, with keyboard fallback for testing.
+Built for the Filmgate Interactive 2026 festival. GitHub repo: `arghhhhh/Doors-and-Floors` (the local folder and Unity product name are still `ZedGames`). A 2-player racing game (or 1 player vs a CPU when nobody else joins) where players compete to climb from the bottom floor to the top floor of a building by jumping into color-coded portal doors on conveyor belts. Uses ZED 2i stereo camera body tracking for player control, with keyboard fallback for testing.
 
 ## Tech Stack
 - Unity 2022.3 (URP)
 - ZED SDK 5.5 via upstream UPM package `stereolabs/zed-unity#v5.5.0`. The package tag must match the installed ZED SDK version, or `sl_unitywrapper.dll` fails to load and the editor crashes on open. Bump the tag in `Packages/manifest.json` whenever the SDK is upgraded.
 - App UI 2.2.4 (UI Toolkit, from the Unity registry) with NES pixel theme (PressStart2P font)
+- VFX Graph 14.0.12 (`Assets/VFX/`): effects must use Opaque outputs on a pixel-pass layer, or they don't render (see ARCHITECTURE "Visual Effects")
 - C# with Animator-driven character animations (Generic rig Hazmat Man)
 
 ## Game Flow
