@@ -141,7 +141,7 @@ ZED_Rig_Mono (DontDestroyOnLoad via ZEDManager.dontDestroyOnLoad, persists acros
 - Players at Z = -0.3 (in front of doors for rendering), clamped every frame
 - Player scale: (0.34, 0.34, 0.34)
 - CapsuleCollider on players (center (0, 1.375, 0), height 2.75, radius 0.75), BoxCollider triggers on doors
-- Ground detection: downward raycast in FixedUpdate, accounts for both capsule center offset and transform scale
+- Ground detection: downward raycast in FixedUpdate from the Rigidbody pose (`rb.position`, not the interpolated transform), starting a capsule-radius above the capsule bottom so a fast landing that slightly penetrates the floor can't put the ray origin inside it (raycasts ignore colliders they start in). A false "airborne" step would re-arm `teleportedThisJump` while the player still stands inside the arrival door's trigger and send them straight back through it
 - Ground check skipped while frozen to prevent false ground transitions during teleport animation
 - Players on Layer 9 ("Player") with self-collision disabled
 
@@ -165,8 +165,14 @@ ZED_Rig_Mono (DontDestroyOnLoad via ZEDManager.dontDestroyOnLoad, persists acros
 - `CpuPlayerInput` sits disabled on Player2; `GameScreenManager.SetupCpuPlayer` enables it and sets `PlayerController.isCpu`
 - Each landing: compute teleports-to-win per floor from the door pairs (`PortalDoor.beltIndex`, `DoorPairGenerator.GetDoorsOnBelt`), pick the door on the belt above with the fewest hops left (travel time breaks ties), steer under it with belt-speed feed-forward, jump when lined up
 - Difficulty fields: `speedMultiplier`, `reactionTimeRange`, `jumpHesitationRange`, `wrongDoorChance` (random door that never goes down), `missChance` (lines up just outside the door's overlap window), `aimJitter`. Context menu has Easy/Normal/Hard presets
-- Stands still while a human is frozen for tracking loss (`pauseWhileOpponentTrackingLost`), and always once no human is left (e.g. during the return-to-lobby delay)
-- CPU wins show "CPU Wins!", play `SFXManager.voiceCpuWins` (falls back to `voiceP2Wins`), and are never added to high scores
+- Stands still while a human is frozen for tracking loss (`pauseWhileOpponentTrackingLost`), and always once the race had humans but none is left (e.g. during the return-to-lobby delay). A CPU-only race never waits
+- A CPU beating a human shows "CPU Wins!" and plays `SFXManager.voiceCpuWins` (falls back to `voiceP2Wins`); CPU wins are never added to high scores
+
+### CPU vs CPU Demo
+
+- `GameScreenManager.cpuVsCpuDemo`: both players are CPUs (Player1 gets a `CpuPlayerInput` with default Normal settings), the tutorial is skipped, and each round restarts `demoRestartDelay` seconds after the win. For capturing footage or an attract loop; don't save the scene with it on
+- `demoTimeScale` sets `Time.timeScale` every frame, so speed can be changed live; reset to 1 when the scene unloads
+- Win screen reads "Player N Wins!" with the P1/P2 voice lines and inspector portraits, like a real 2P round
 
 ### Movement Mapping
 

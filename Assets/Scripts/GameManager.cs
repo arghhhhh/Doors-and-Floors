@@ -151,6 +151,8 @@ public class GameManager : MonoBehaviour
         }
 
         bool cpuWon = winner != null && winner.isCpu;
+        // "CPU Wins!" only when the CPU beat a human; a CPU-only demo race reads like 2P
+        bool cpuBeatHuman = cpuWon && System.Array.Exists(players, p => !p.isCpu);
 
         // CPU times never go on the leaderboard
         bool isHighScore = !cpuWon
@@ -160,7 +162,7 @@ public class GameManager : MonoBehaviour
         // Play win sound based on player count
         if (SFXManager.Instance != null)
         {
-            if (cpuWon)
+            if (cpuBeatHuman)
                 SFXManager.Instance.Play(SFXManager.Instance.voiceCpuWins != null
                     ? SFXManager.Instance.voiceCpuWins
                     : SFXManager.Instance.voiceP2Wins);
@@ -174,7 +176,7 @@ public class GameManager : MonoBehaviour
 
         if (uiManager != null)
         {
-            string winnerLabel = cpuWon ? "CPU Wins!" : $"Player {playerNumber} Wins!";
+            string winnerLabel = cpuBeatHuman ? "CPU Wins!" : $"Player {playerNumber} Wins!";
             uiManager.ShowWinPanel(winnerLabel, elapsedTime, isHighScore,
                 winner != null ? winner.profilePhoto : null);
         }

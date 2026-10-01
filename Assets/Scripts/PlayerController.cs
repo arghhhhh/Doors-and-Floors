@@ -216,8 +216,19 @@ public class PlayerController : MonoBehaviour
         float scaleY = transform.lossyScale.y;
         float halfHeight = capsule != null ? capsule.height * 0.5f * scaleY : 0.5f;
         float centerY = capsule != null ? capsule.center.y * scaleY : 0f;
-        Vector3 origin = transform.position + Vector3.up * (centerY - halfHeight + 0.05f);
-        isGrounded = Physics.Raycast(origin, Vector3.down, groundCheckDistance, groundLayer);
+        float radius = capsule != null ? capsule.radius * transform.lossyScale.x : 0.25f;
+
+        // Use the Rigidbody pose, not transform.position: with interpolation the transform
+        // lags the physics state inside FixedUpdate (by several steps at high timeScale).
+        // Start the ray well inside the capsule: if it starts inside the floor (fast landing,
+        // slight penetration), Physics.Raycast ignores that collider and the player reads as
+        // airborne for a step — which re-arms teleportedThisJump while still standing inside
+        // the arrival door's trigger and sends them straight back through it.
+        Vector3 capsuleBottom = rb.position + Vector3.up * (centerY - halfHeight);
+        float lift = Mathf.Max(radius, 0.05f);
+        // Grounded = floor within (groundCheckDistance - 0.05) below the capsule bottom (unchanged)
+        isGrounded = Physics.Raycast(capsuleBottom + Vector3.up * lift, Vector3.down,
+            lift + groundCheckDistance - 0.05f, groundLayer);
 
         if (isGrounded)
         {

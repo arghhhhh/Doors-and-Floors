@@ -7,6 +7,8 @@ using sl;
 /// Game scene orchestrator that reads player assignments from ZEDTrackingProvider,
 /// activates player GameObjects, and attaches BodyTrackingInput components.
 /// In vs-CPU mode (GameSession.VsCpu) Player2 is driven by CpuPlayerInput.
+/// In demo mode (cpuVsCpuDemo) both players are CPUs and rounds restart on their own,
+/// for capturing gameplay footage or as an attract loop.
 /// Handles player removal on tracking loss timeout.
 /// </summary>
 public class GameScreenManager : MonoBehaviour
@@ -30,6 +32,15 @@ public class GameScreenManager : MonoBehaviour
     [Tooltip("Optional portrait shown on the win screen when the CPU wins")]
     public Texture2D cpuProfilePhoto;
 
+    [Header("CPU vs CPU Demo")]
+    [Tooltip("Both players are CPUs, the tutorial is skipped and rounds restart automatically (footage capture / attract loop). Overrides ZED and keyboard setup.")]
+    public bool cpuVsCpuDemo = false;
+    [Tooltip("Game speed during the demo (1 = real time); can be changed while playing")]
+    [Range(0.25f, 4f)]
+    public float demoTimeScale = 1f;
+    [Tooltip("Seconds (game time) the win screen stays up before the next round. Keep below UIManager.winCountdownDuration or it returns to the menu first.")]
+    public float demoRestartDelay = 5f;
+
     [Header("Scene Navigation")]
     public string startScreenSceneName = "StartScreen";
     public float returnToStartDelay = 2f;
@@ -37,12 +48,19 @@ public class GameScreenManager : MonoBehaviour
     // Humans only — the CPU never keeps a game alive by itself
     int humanPlayerCount;
     bool returningToStart;
+    float demoWinTimer;
 
     void Start()
     {
         // Auto-find player references by name if not assigned in inspector
         if (player1Object == null) player1Object = GameObject.Find("Player1");
         if (player2Object == null) player2Object = GameObject.Find("Player2");
+
+        if (cpuVsCpuDemo)
+        {
+            SetupDemoMode();
+            return;
+        }
 
         ZEDTrackingProvider provider = ZEDTrackingProvider.Instance;
 
@@ -108,7 +126,53 @@ public class GameScreenManager : MonoBehaviour
         }
     }
 
-    void SetupCpuPlayer(GameObject playerObj)
+    void SetupDemoMode()
+    {
+        Debug.Log("[GameScreenManager] CPU vs CPU demo mode.");
+        // Keep the inspector demo portraits so the win screen looks like a real 2P round
+        SetupCpuPlayer(player1Object, keepProfilePhoto: true);
+        SetupCpuPlayer(player2Object, keepProfilePhoto: true);
+        humanPlayerCount = 0;
+        Time.timeScale = demoTimeScale;
+    }
+
+    void Update()
+    {
+        if (!cpuVsCpuDemo || GameManager.Instance == null) return;
+
+        // Applied every frame so the speed can be changed live in the Inspector
+        Time.timeScale = demoTimeScale;
+
+        switch (GameManager.Instance.CurrentState)
+        {
+            case GameManager.GameState.Tutorial:
+                // Skip the tutorial modal (fires GameManager's completion callback)
+                UIManager ui = GameManager.Instance.uiManager;
+                if (ui != null) ui.DebugToggleTutorial();
+                break;
+
+            case GameManager.GameState.Won:
+                demoWinTimer += Time.deltaTime;
+                if (demoWinTimer >= demoRestartDelay)
+                {
+                    demoWinTimer = 0f;
+                    GameManager.Instance.Restart();
+                }
+                break;
+
+            default:
+                demoWinTimer = 0f;
+                break;
+        }
+    }
+
+    void OnDestroy()
+    {
+        // timeScale is global and survives scene loads
+        if (cpuVsCpuDemo) Time.timeScale = 1f;
+    }
+
+    void SetupCpuPlayer(GameObject playerObj, bool keepProfilePhoto = false)
     {
         if (playerObj == null) return;
 
@@ -120,9 +184,11 @@ public class GameScreenManager : MonoBehaviour
         pc.useExternalInput = true;
         pc.isCpu = true;
         // Replace the inspector demo photo; null hides the photo on the win screen
-        pc.SetProfilePhoto(cpuProfilePhoto);
+        if (!keepProfilePhoto)
+            pc.SetProfilePhoto(cpuProfilePhoto);
 
-        // Normally pre-added (disabled) on Player2 so difficulty is tuned in the scene
+        // Pre-added (disabled) on Player2 so difficulty is tuned in the scene; Player1 gets
+        // one with default (Normal) settings in demo mode
         CpuPlayerInput cpu = playerObj.GetComponent<CpuPlayerInput>();
         if (cpu == null)
             cpu = playerObj.AddComponent<CpuPlayerInput>();

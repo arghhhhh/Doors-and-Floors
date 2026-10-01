@@ -309,21 +309,25 @@ public class CpuPlayerInput : MonoBehaviour
     bool IsReachable(float x) => Mathf.Abs(x) <= reachableHalfWidth;
 
     /// <summary>
-    /// True when no human is still in the race (e.g. removed after a tracking-loss timeout,
-    /// while the scene waits to return to the lobby), or, if enabled, while any human is
-    /// frozen for tracking loss.
+    /// True when the race had humans but none is still in it (e.g. removed after a
+    /// tracking-loss timeout, while the scene waits to return to the lobby), or, if enabled,
+    /// while any human is frozen for tracking loss. A CPU-only race (demo mode) never waits.
     /// </summary>
     bool ShouldWaitForHumans()
     {
+        bool anyHuman = false;
         bool anyHumanActive = false;
         foreach (var p in opponents)
         {
-            if (p == null || p.isCpu || !p.isActiveAndEnabled) continue;
+            if (p == null || p.isCpu) continue;
+            // Inactive humans still count: removed players are deactivated, not destroyed
+            anyHuman = true;
+            if (!p.isActiveAndEnabled) continue;
             anyHumanActive = true;
             if (pauseWhileOpponentTrackingLost && p.IsTrackingLost)
                 return true;
         }
-        return !anyHumanActive;
+        return anyHuman && !anyHumanActive;
     }
 
     static float RandomIn(Vector2 range) => Random.Range(range.x, range.y);
