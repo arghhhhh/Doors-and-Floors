@@ -1,6 +1,6 @@
 <img width="1338" height="162" alt="doors_and_floors_title2026-10-01 123041" src="https://github.com/user-attachments/assets/5494f18f-74c8-4eed-8aab-956218b24a3c" />
 
-A full-body racing game for one or two players, built for the 2026 [FilmGate Interactive Media Festival](https://www.filmgate.miami/filmgate-interactive-media-festival).
+A full-body racing game for one or two players, built for the 2026 [FilmGate Interactive Media Festival](https://www.filmgate.miami/filmgate-interactive-media-festival). I challenged myself at the onset of this project to use AI services to build/generate every single part of this game from end-to-end. Aside from requiring some curation and a few manual image/video edits, the endeavor was successful.
 
 Players race from the bottom floor of a building to the top by jumping through portal doors that ride on conveyor belts. There are no controllers: a ZED 2i stereo camera tracks each player's body, so you run left and right by actually moving and jump by actually jumping.
 
@@ -80,7 +80,6 @@ Docs/
 ```
 
 ## Credits
-
 - Built for the [FilmGate Interactive Media Festival](https://www.filmgate.miami/filmgate-interactive-media-festival)
 - Body tracking by the [Stereolabs ZED SDK](https://www.stereolabs.com/)
 - Hazmat Man character model generated with [MidJourney](https://www.midjourney.com/) and [Meshy](https://www.meshy.ai/)
