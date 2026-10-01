@@ -9,6 +9,7 @@ using sl;
 /// <summary>
 /// Lobby scene controller for player registration via ZED body tracking gestures.
 /// State machine: WaitingForP1Detection → WaitingForP1Confirm → WaitingForP2 → WaitingForP2Confirm → Launching
+/// If no P2 confirms before the countdown ends, P1 plays against the CPU (GameSession.VsCpu).
 /// </summary>
 public class StartScreenManager : MonoBehaviour
 {
@@ -138,6 +139,8 @@ public class StartScreenManager : MonoBehaviour
 
     void Start()
     {
+        GameSession.VsCpu = false;
+
         trackingProvider = ZEDTrackingProvider.Instance;
         if (trackingProvider != null)
             trackingProvider.ClearAllAssignments();
@@ -171,6 +174,15 @@ public class StartScreenManager : MonoBehaviour
 
     void Update()
     {
+        #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // Debug: launch straight into keyboard mode without the ZED (K = 2 players, V = vs CPU)
+        if (CurrentState != LobbyState.Launching)
+        {
+            if (Input.GetKeyDown(KeyCode.K)) { LaunchKeyboardDebug(false); return; }
+            if (Input.GetKeyDown(KeyCode.V)) { LaunchKeyboardDebug(true); return; }
+        }
+        #endif
+
         if (trackingProvider == null)
         {
             trackingProvider = ZEDTrackingProvider.Instance;
@@ -725,10 +737,27 @@ public class StartScreenManager : MonoBehaviour
     void LaunchGame()
     {
         CurrentState = LobbyState.Launching;
+        GameSession.VsCpu = trackingProvider != null
+            && trackingProvider.IsPlayerAssigned(1)
+            && !trackingProvider.IsPlayerAssigned(2);
         SFXManager.Instance?.Play(SFXManager.Instance?.sfxGameStarting);
-        Debug.Log($"[StartScreenManager] Launching with {trackingProvider.GetAssignedPlayerCount()} player(s)");
+        int count = trackingProvider != null ? trackingProvider.GetAssignedPlayerCount() : 0;
+        Debug.Log($"[StartScreenManager] Launching with {count} player(s){(GameSession.VsCpu ? " vs CPU" : "")}");
         SceneManager.LoadScene(gameSceneName);
     }
+
+    #if UNITY_EDITOR || DEVELOPMENT_BUILD
+    void LaunchKeyboardDebug(bool vsCpu)
+    {
+        // No assignments → GameScreenManager falls back to keyboard control
+        if (trackingProvider != null)
+            trackingProvider.ClearAllAssignments();
+        CurrentState = LobbyState.Launching;
+        GameSession.VsCpu = vsCpu;
+        Debug.Log($"[StartScreenManager] Debug keyboard launch{(vsCpu ? " vs CPU" : " (2 players)")}");
+        SceneManager.LoadScene(gameSceneName);
+    }
+    #endif
 
     Vector3[] GetWorldKeypoints(DetectedBody body)
     {
@@ -850,7 +879,7 @@ public class StartScreenManager : MonoBehaviour
                 default:
                     p2StatusEl.text = trackingProvider != null && trackingProvider.IsPlayerAssigned(2)
                         ? "P2: Ready!"
-                        : "P2: ---";
+                        : "P2: CPU";
                     break;
             }
         }
@@ -861,7 +890,7 @@ public class StartScreenManager : MonoBehaviour
                 || CurrentState == LobbyState.Launching)
             {
                 bool p2Joined = trackingProvider != null && trackingProvider.IsPlayerAssigned(2);
-                string mode = p2Joined ? "multiplayer" : "solo";
+                string mode = p2Joined ? "multiplayer" : "vs CPU";
                 countdownEl.text = $"Starting {mode} in {Mathf.CeilToInt(Mathf.Max(0f, p2Countdown))}s";
                 countdownEl.style.display = DisplayStyle.Flex;
             }

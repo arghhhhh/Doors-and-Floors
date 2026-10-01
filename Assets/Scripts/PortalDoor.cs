@@ -3,6 +3,8 @@ using UnityEngine;
 public class PortalDoor : MonoBehaviour
 {
     public PortalDoor pairedDoor;
+    /// <summary>Index of the belt this door hangs on (set by DoorPairGenerator). Belt i is the ceiling of floor i.</summary>
+    [HideInInspector] public int beltIndex;
     public Color doorColor = Color.white;
     public float cooldownTime = 0.5f;
     public float teleportYOffset = -0.5f; // Appear at the door, then fall naturally

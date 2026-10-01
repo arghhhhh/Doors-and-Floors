@@ -11,6 +11,7 @@ VideoQuad            Quad (8×4.5), VideoPlayer loops hands_up_gesture.mp4, URP 
 ZED_Rig_Mono         Prefab instance (DontDestroyOnLoad)
   ├── ZEDManager       Camera connection, body tracking, bodyFormat=BODY_38
   ├── ZEDTrackingProvider  Singleton, player-body assignments
+  ├── ZEDRigGuard      Deactivates this copy if a persistent rig already exists
   └── Camera_Left      Small viewport preview (top-left, 25% of screen, depth=10)
         └── Frame      Rendering plane for camera feed
 StartScreenManager   StartScreenManager + UIDocument (StartScreen.uxml)
@@ -53,7 +54,7 @@ Floor_6              Cube, Layer: Ground(8), scale (14, 0.3, 1), Y=14.12, Bricks
 Wall_Left            Cube, Layer: Ground(8), X=-7.25, scale (0.5, 16, 1), Bricks mat
 Wall_Right           Cube, Layer: Ground(8), X=+7.25, scale (0.5, 16, 1), Bricks mat
 Player1              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController
-Player2              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController
+Player2              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController + CpuPlayerInput (disabled; enabled in vs-CPU mode)
 GameManager          Empty, GameManager + DoorPairGenerator + HighScoreManager
 GameScreenManager    Empty, GameScreenManager + UIManager + UIDocument (GameScreen.uxml)
 FinishLine           BoxCollider(trigger, size 14x0.5x2), FinishLine script, Y=12.25

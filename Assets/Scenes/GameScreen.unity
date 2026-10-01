@@ -1318,6 +1318,7 @@ MonoBehaviour:
   doorGenerator: {fileID: 875847978}
   uiManager: {fileID: 0}
   teleportDelay: 0.3
+  maxGameTime: 300
 --- !u!4 &875847980
 Transform:
   m_ObjectHideFlags: 0
@@ -1368,6 +1369,8 @@ MonoBehaviour:
   player2Object: {fileID: 1036767372}
   trackingLostPrefab: {fileID: 0}
   trackingLostShader: {fileID: 4800000, guid: 65e7317974d11e740bf1c1825d420284, type: 3}
+  keyboardVsCpu: 0
+  cpuProfilePhoto: {fileID: 0}
   startScreenSceneName: StartScreen
   returnToStartDelay: 2
 --- !u!4 &881329856
@@ -1468,7 +1471,8 @@ MonoBehaviour:
   hueShift: 0
   hueShiftShader: {fileID: 4800000, guid: 11fa833694bc8894493d27aaa1019c01, type: 3}
   rb: {fileID: 0}
-  useBodyTracking: 0
+  useExternalInput: 0
+  isCpu: 0
   trackingXOffset: 0
   needsOffsetRecalculation: 0
 --- !u!54 &965527825
@@ -1561,6 +1565,7 @@ GameObject:
   - component: {fileID: 1036767376}
   - component: {fileID: 1036767374}
   - component: {fileID: 1036767373}
+  - component: {fileID: 1036767379}
   m_Layer: 9
   m_Name: Player2
   m_TagString: Untagged
@@ -1596,7 +1601,8 @@ MonoBehaviour:
   hueShift: 0.4
   hueShiftShader: {fileID: 4800000, guid: 11fa833694bc8894493d27aaa1019c01, type: 3}
   rb: {fileID: 0}
-  useBodyTracking: 0
+  useExternalInput: 0
+  isCpu: 0
   trackingXOffset: 0
   needsOffsetRecalculation: 0
 --- !u!54 &1036767374
@@ -1665,6 +1671,29 @@ Transform:
   - {fileID: 572516608}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1036767379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1036767372}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a9f6601953d8ba4f84005f3dc40c9f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speedMultiplier: 0.5
+  steeringGain: 6
+  reactionTimeRange: {x: 1.2, y: 2}
+  jumpHesitationRange: {x: 0.3, y: 0.7}
+  jumpCooldown: 0.6
+  wrongDoorChance: 0.3
+  missChance: 0.3
+  aimJitter: 0.15
+  pauseWhileOpponentTrackingLost: 1
+  reachableHalfWidth: 6.2
+  alignTolerance: 0.2
 --- !u!1 &1281474001
 GameObject:
   m_ObjectHideFlags: 0

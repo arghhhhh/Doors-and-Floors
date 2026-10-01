@@ -80,7 +80,30 @@ public class BodyTrackingInput : MonoBehaviour
             trackingProvider.OnPlayerBodyUpdated += HandleBodyUpdated;
             trackingProvider.OnPlayerBodyLost += HandleBodyLost;
         }
+        if (playerController != null)
+            playerController.OnReset += ResetInputState;
 
+        ResetInputState();
+    }
+
+    void OnDisable()
+    {
+        if (trackingProvider != null)
+        {
+            trackingProvider.OnPlayerBodyUpdated -= HandleBodyUpdated;
+            trackingProvider.OnPlayerBodyLost -= HandleBodyLost;
+        }
+        if (playerController != null)
+            playerController.OnReset -= ResetInputState;
+    }
+
+    /// <summary>
+    /// Clears tracking-loss and jump state. Runs on enable and whenever the player is reset
+    /// (restart, tutorial end). If the body is still missing, HandleBodyLost re-enters
+    /// Searching on the next tracking frame.
+    /// </summary>
+    void ResetInputState()
+    {
         trackingState = TrackingState.Tracking;
         searchingTimer = 0f;
         lostTimer = 0f;
@@ -91,15 +114,8 @@ public class BodyTrackingInput : MonoBehaviour
 
         if (trackingLostIndicator != null)
             trackingLostIndicator.SetActive(false);
-    }
-
-    void OnDisable()
-    {
-        if (trackingProvider != null)
-        {
-            trackingProvider.OnPlayerBodyUpdated -= HandleBodyUpdated;
-            trackingProvider.OnPlayerBodyLost -= HandleBodyLost;
-        }
+        if (trackingLostOverlay != null)
+            trackingLostOverlay.Hide();
     }
 
     void HandleBodyUpdated(int pNum, DetectedBody body)
@@ -205,7 +221,7 @@ public class BodyTrackingInput : MonoBehaviour
 
             float currentX = transform.position.x;
             float velocityX = (targetX - currentX) * xTrackingSpeed;
-            playerController.rb.velocity = new Vector3(velocityX, playerController.rb.velocity.y, 0f);
+            playerController.SetHorizontalVelocity(velocityX);
         }
 
         // Jump
@@ -239,11 +255,8 @@ public class BodyTrackingInput : MonoBehaviour
         bool isJumping = heightAboveBaseline > physicalJumpThreshold;
 
         // Rising edge — trigger jump
-        if (isJumping && !wasPhysicalJumpDetected && playerController.IsGrounded && jumpCooldownTimer <= 0f)
-        {
-            playerController.rb.AddForce(Vector3.up * playerController.jumpForce, ForceMode.Impulse);
+        if (isJumping && !wasPhysicalJumpDetected && jumpCooldownTimer <= 0f && playerController.TryJump())
             jumpCooldownTimer = jumpCooldown;
-        }
 
         wasPhysicalJumpDetected = isJumping;
     }
@@ -254,11 +267,8 @@ public class BodyTrackingInput : MonoBehaviour
         float[] confidences = body.rawBodyData.keypointConfidence;
         bool gestureActive = GestureDetector.IsFieldGoalGesture(keypoints, confidences);
 
-        if (gestureActive && !wasGestureActive && playerController.IsGrounded && jumpCooldownTimer <= 0f)
-        {
-            playerController.rb.AddForce(Vector3.up * playerController.jumpForce, ForceMode.Impulse);
+        if (gestureActive && !wasGestureActive && jumpCooldownTimer <= 0f && playerController.TryJump())
             jumpCooldownTimer = jumpCooldown;
-        }
 
         wasGestureActive = gestureActive;
     }

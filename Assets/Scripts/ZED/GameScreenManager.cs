@@ -6,6 +6,7 @@ using sl;
 /// <summary>
 /// Game scene orchestrator that reads player assignments from ZEDTrackingProvider,
 /// activates player GameObjects, and attaches BodyTrackingInput components.
+/// In vs-CPU mode (GameSession.VsCpu) Player2 is driven by CpuPlayerInput.
 /// Handles player removal on tracking loss timeout.
 /// </summary>
 public class GameScreenManager : MonoBehaviour
@@ -23,11 +24,18 @@ public class GameScreenManager : MonoBehaviour
     [Header("Shaders (must be assigned so they're included in builds)")]
     public Shader trackingLostShader;
 
+    [Header("CPU Opponent")]
+    [Tooltip("Keyboard fallback (no ZED players): Player2 is the CPU instead of arrow keys")]
+    public bool keyboardVsCpu = false;
+    [Tooltip("Optional portrait shown on the win screen when the CPU wins")]
+    public Texture2D cpuProfilePhoto;
+
     [Header("Scene Navigation")]
     public string startScreenSceneName = "StartScreen";
     public float returnToStartDelay = 2f;
 
-    int activePlayerCount;
+    // Humans only — the CPU never keeps a game alive by itself
+    int humanPlayerCount;
     bool returningToStart;
 
     void Start()
@@ -41,8 +49,9 @@ public class GameScreenManager : MonoBehaviour
         if (provider == null || provider.GetAssignedPlayerCount() == 0)
         {
             // No ZED tracking — fall back to keyboard mode
-            Debug.Log("[GameScreenManager] No body tracking assignments found. Keyboard mode.");
-            SetupKeyboardMode();
+            bool vsCpu = keyboardVsCpu || GameSession.VsCpu;
+            Debug.Log($"[GameScreenManager] No body tracking assignments found. Keyboard mode{(vsCpu ? " vs CPU" : "")}.");
+            SetupKeyboardMode(vsCpu);
             return;
         }
 
@@ -50,7 +59,7 @@ public class GameScreenManager : MonoBehaviour
         if (player1Object != null) player1Object.SetActive(false);
         if (player2Object != null) player2Object.SetActive(false);
 
-        activePlayerCount = 0;
+        humanPlayerCount = 0;
 
         // Activate and configure assigned players
         if (provider.IsPlayerAssigned(1))
@@ -58,6 +67,8 @@ public class GameScreenManager : MonoBehaviour
 
         if (provider.IsPlayerAssigned(2))
             SetupTrackedPlayer(2, player2Object, provider);
+        else if (GameSession.VsCpu)
+            SetupCpuPlayer(player2Object);
 
         // If tutorial hasn't been shown yet, GameManager will freeze/hide players.
         // Re-apply freeze here since SetupTrackedPlayer calls ResetPlayer which makes them visible.
@@ -70,25 +81,52 @@ public class GameScreenManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"[GameScreenManager] Started with {activePlayerCount} tracked player(s).");
+        Debug.Log($"[GameScreenManager] Started with {humanPlayerCount} tracked player(s){(GameSession.VsCpu ? " vs CPU" : "")}.");
     }
 
-    void SetupKeyboardMode()
+    void SetupKeyboardMode(bool vsCpu)
     {
-        // Keep both players active with keyboard input (default behavior)
+        // Player1 always on keyboard; Player2 on keyboard or CPU
         if (player1Object != null)
         {
             player1Object.SetActive(true);
             var pc = player1Object.GetComponent<PlayerController>();
-            if (pc != null) pc.useBodyTracking = false;
+            if (pc != null) pc.useExternalInput = false;
         }
-        if (player2Object != null)
+        humanPlayerCount = 1;
+
+        if (vsCpu)
+        {
+            SetupCpuPlayer(player2Object);
+        }
+        else if (player2Object != null)
         {
             player2Object.SetActive(true);
             var pc = player2Object.GetComponent<PlayerController>();
-            if (pc != null) pc.useBodyTracking = false;
+            if (pc != null) pc.useExternalInput = false;
+            humanPlayerCount = 2;
         }
-        activePlayerCount = 2;
+    }
+
+    void SetupCpuPlayer(GameObject playerObj)
+    {
+        if (playerObj == null) return;
+
+        playerObj.SetActive(true);
+
+        PlayerController pc = playerObj.GetComponent<PlayerController>();
+        if (pc == null) return;
+
+        pc.useExternalInput = true;
+        pc.isCpu = true;
+        // Replace the inspector demo photo; null hides the photo on the win screen
+        pc.SetProfilePhoto(cpuProfilePhoto);
+
+        // Normally pre-added (disabled) on Player2 so difficulty is tuned in the scene
+        CpuPlayerInput cpu = playerObj.GetComponent<CpuPlayerInput>();
+        if (cpu == null)
+            cpu = playerObj.AddComponent<CpuPlayerInput>();
+        cpu.enabled = true;
     }
 
     void SetupTrackedPlayer(int playerNumber, GameObject playerObj, ZEDTrackingProvider provider)
@@ -96,12 +134,12 @@ public class GameScreenManager : MonoBehaviour
         if (playerObj == null) return;
 
         playerObj.SetActive(true);
-        activePlayerCount++;
+        humanPlayerCount++;
 
         PlayerController pc = playerObj.GetComponent<PlayerController>();
         if (pc == null) return;
 
-        pc.useBodyTracking = true;
+        pc.useExternalInput = true;
 
         // Apply captured profile photo from lobby (overrides inspector-assigned demo photo)
         Texture2D capturedPhoto = provider.GetPlayerProfilePhoto(playerNumber);
@@ -198,9 +236,9 @@ public class GameScreenManager : MonoBehaviour
         if (ZEDTrackingProvider.Instance != null)
             ZEDTrackingProvider.Instance.UnassignPlayer(playerNumber);
 
-        activePlayerCount--;
+        humanPlayerCount--;
 
-        if (activePlayerCount <= 0 && !returningToStart)
+        if (humanPlayerCount <= 0 && !returningToStart)
         {
             returningToStart = true;
             StartCoroutine(ReturnToStartScreen());

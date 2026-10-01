@@ -41,6 +41,11 @@ public class DoorPairGenerator : MonoBehaviour
     List<ConveyorBelt> belts = new List<ConveyorBelt>();
     List<List<PortalDoor>> beltDoors = new List<List<PortalDoor>>();
 
+    public int BeltCount => beltDoors.Count;
+    public ConveyorBelt GetBelt(int beltIndex) => belts[beltIndex];
+    /// <summary>Paired doors on a belt (leftover unpaired doors are already destroyed).</summary>
+    public IReadOnlyList<PortalDoor> GetDoorsOnBelt(int beltIndex) => beltDoors[beltIndex];
+
     public void Generate()
     {
         ClearExisting();
@@ -107,6 +112,7 @@ public class DoorPairGenerator : MonoBehaviour
             float x = beltLeftBound + spacing * (d + 0.5f);
             GameObject doorObj = CreateDoorObject($"Door_F{floorIndex}_{d}", beltObj.transform, new Vector3(x, 0f, 0f));
             PortalDoor door = doorObj.GetComponent<PortalDoor>();
+            door.beltIndex = floorIndex;
             doors.Add(door);
         }
 

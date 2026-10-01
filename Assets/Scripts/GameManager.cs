@@ -103,6 +103,7 @@ public class GameManager : MonoBehaviour
                 return;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             // Debug: Q key instantly wins as Player 1
             if (Input.GetKeyDown(KeyCode.Q))
             {
@@ -115,6 +116,7 @@ public class GameManager : MonoBehaviour
                 if (uiManager != null)
                     uiManager.DebugToggleTutorial();
             }
+#endif
         }
 
         // Restart
@@ -148,13 +150,21 @@ public class GameManager : MonoBehaviour
             if (p.playerNumber == playerNumber) winner = p;
         }
 
-        bool isHighScore = HighScoreManager.Instance != null
+        bool cpuWon = winner != null && winner.isCpu;
+
+        // CPU times never go on the leaderboard
+        bool isHighScore = !cpuWon
+            && HighScoreManager.Instance != null
             && HighScoreManager.Instance.IsHighScore(elapsedTime);
 
         // Play win sound based on player count
         if (SFXManager.Instance != null)
         {
-            if (players.Length <= 1)
+            if (cpuWon)
+                SFXManager.Instance.Play(SFXManager.Instance.voiceCpuWins != null
+                    ? SFXManager.Instance.voiceCpuWins
+                    : SFXManager.Instance.voiceP2Wins);
+            else if (players.Length <= 1)
                 SFXManager.Instance.Play(SFXManager.Instance.voiceWinner);
             else if (playerNumber == 1)
                 SFXManager.Instance.Play(SFXManager.Instance.voiceP1Wins);
@@ -164,7 +174,8 @@ public class GameManager : MonoBehaviour
 
         if (uiManager != null)
         {
-            uiManager.ShowWinPanel(playerNumber, elapsedTime, isHighScore,
+            string winnerLabel = cpuWon ? "CPU Wins!" : $"Player {playerNumber} Wins!";
+            uiManager.ShowWinPanel(winnerLabel, elapsedTime, isHighScore,
                 winner != null ? winner.profilePhoto : null);
         }
 
@@ -239,6 +250,7 @@ public class GameManager : MonoBehaviour
         return new Vector3(x, spawnY, 0f);
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     void DebugWinPlayer1()
     {
         PlayerController[] players = FindObjectsOfType<PlayerController>();
@@ -254,6 +266,7 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+#endif
 
     public float GetElapsedTime() => elapsedTime;
 

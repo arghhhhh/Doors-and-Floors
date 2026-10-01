@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -39,9 +40,22 @@ public class PlayerController : MonoBehaviour
     Renderer playerRenderer;
     Animator animator;
     Transform modelTransform;
-    bool frozen;
-    public bool IsFrozen => frozen;
-    [HideInInspector] public bool useBodyTracking = false;
+    // Portal animation, tracking loss and win/tutorial each hold their own freeze so
+    // releasing one (e.g. tracking recovered mid-teleport) can't cancel another
+    [Flags] enum FreezeReason { None = 0, Portal = 1, TrackingLoss = 2, Win = 4 }
+    FreezeReason freezeReasons;
+    public bool IsFrozen => freezeReasons != FreezeReason.None;
+    public bool IsTrackingLost => (freezeReasons & FreezeReason.TrackingLoss) != 0;
+
+    /// <summary>Raised by ResetPlayer so input adapters can clear their own state.</summary>
+    public event Action OnReset;
+    /// <summary>
+    /// True when movement comes from an input adapter (BodyTrackingInput, CpuPlayerInput)
+    /// via SetHorizontalVelocity/TryJump instead of the keyboard.
+    /// </summary>
+    [HideInInspector] public bool useExternalInput = false;
+    /// <summary>Set by GameScreenManager when this player is driven by CpuPlayerInput.</summary>
+    [HideInInspector] public bool isCpu = false;
     bool teleportedThisJump;
     bool hasLandedSinceReset;
     public bool CanTeleport => !teleportedThisJump && hasLandedSinceReset;
@@ -132,23 +146,21 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (frozen) return;
+        if (IsFrozen) return;
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             return;
 
         float moveX = 0f;
 
-        if (!useBodyTracking)
+        if (!useExternalInput)
         {
             if (Input.GetKey(leftKey)) moveX -= 1f;
             if (Input.GetKey(rightKey)) moveX += 1f;
 
-            rb.velocity = new Vector3(moveX * moveSpeed, rb.velocity.y, 0f);
+            SetHorizontalVelocity(moveX * moveSpeed);
 
-            if (Input.GetKeyDown(jumpKey) && isGrounded)
-            {
-                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            }
+            if (Input.GetKeyDown(jumpKey))
+                TryJump();
         }
         else
         {
@@ -179,12 +191,27 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>Sets X velocity, keeping the current Y velocity. Ignored while frozen.</summary>
+    public void SetHorizontalVelocity(float velocityX)
+    {
+        if (IsFrozen) return;
+        rb.velocity = new Vector3(velocityX, rb.velocity.y, 0f);
+    }
+
+    /// <summary>Applies the jump impulse if grounded and not frozen. Returns true if it jumped.</summary>
+    public bool TryJump()
+    {
+        if (IsFrozen || !isGrounded) return false;
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        return true;
+    }
+
     void CheckGround()
     {
         // Don't update ground state while frozen (teleport animation) —
         // otherwise the raycast can detect the floor at the destination,
         // creating a false ground→air transition that resets teleportedThisJump.
-        if (frozen) return;
+        if (IsFrozen) return;
 
         float scaleY = transform.lossyScale.y;
         float halfHeight = capsule != null ? capsule.height * 0.5f * scaleY : 0.5f;
@@ -226,9 +253,7 @@ public class PlayerController : MonoBehaviour
     {
         int gen = resetGeneration;
 
-        frozen = true;
-        rb.velocity = Vector3.zero;
-        rb.isKinematic = true;
+        AddFreeze(FreezeReason.Portal);
         teleportedThisJump = true;
 
         // Character center offset (pivot is at feet, center is higher)
@@ -305,29 +330,37 @@ public class PlayerController : MonoBehaviour
         // Sync physics position before switching off kinematic to prevent
         // interpolation from using a stale position (causes offset in builds).
         rb.position = finalPos;
-        rb.velocity = Vector3.zero;
-        rb.isKinematic = false;
-        frozen = false;
+        RemoveFreeze(FreezeReason.Portal);
     }
 
-    public void FreezeForTrackingLoss()
+    void AddFreeze(FreezeReason reason)
     {
-        frozen = true;
-        rb.velocity = Vector3.zero;
-        rb.isKinematic = true;
+        freezeReasons |= reason;
+        // Already kinematic when stacking a second reason; Unity warns on setting its velocity
+        if (!rb.isKinematic)
+        {
+            rb.velocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
     }
 
-    public void UnfreezeFromTrackingLoss()
+    void RemoveFreeze(FreezeReason reason)
     {
-        frozen = false;
-        rb.isKinematic = false;
+        freezeReasons &= ~reason;
+        if (freezeReasons == FreezeReason.None)
+        {
+            rb.isKinematic = false;
+            rb.velocity = Vector3.zero;
+        }
     }
+
+    public void FreezeForTrackingLoss() => AddFreeze(FreezeReason.TrackingLoss);
+
+    public void UnfreezeFromTrackingLoss() => RemoveFreeze(FreezeReason.TrackingLoss);
 
     public void FreezeForWin()
     {
-        frozen = true;
-        rb.velocity = Vector3.zero;
-        rb.isKinematic = true;
+        AddFreeze(FreezeReason.Win);
         SetAllRenderersVisible(true);
     }
 
@@ -336,7 +369,7 @@ public class PlayerController : MonoBehaviour
         resetGeneration++;
         StopAllCoroutines();
 
-        frozen = false;
+        freezeReasons = FreezeReason.None;
         teleportedThisJump = false;
         hasLandedSinceReset = false;
         wasGrounded = false;
@@ -347,6 +380,8 @@ public class PlayerController : MonoBehaviour
         rb.velocity = Vector3.zero;
         transform.position = new Vector3(spawnPosition.x, spawnPosition.y, -0.3f);
         SetAllRenderersVisible(true);
+
+        OnReset?.Invoke();
     }
 
     public void SetVisible(bool visible) => SetAllRenderersVisible(visible);

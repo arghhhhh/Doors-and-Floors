@@ -34,8 +34,12 @@ public class UIManager : MonoBehaviour
     VisualElement gestureIconEl;
     Unity.AppUI.UI.Text countdownEl;
 
-    // Blink state for high score label
+    // Blink state — schedulers are created once and paused when the win panel hides,
+    // since restarts reuse the scene and would otherwise stack extra blinkers each win
     bool highScoreLabelVisible = true;
+    bool instructionsVisible = true;
+    IVisualElementScheduledItem highScoreBlink;
+    IVisualElementScheduledItem instructionsBlink;
 
     // Win countdown state
     float winCountdown;
@@ -161,6 +165,9 @@ public class UIManager : MonoBehaviour
         if (highScoreListEl != null)
             highScoreListEl.Clear();
 
+        highScoreBlink?.Pause();
+        instructionsBlink?.Pause();
+
         winCountdownActive = false;
     }
 
@@ -239,14 +246,14 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowWinPanel(int playerNumber, float time, bool isHighScore, Texture2D profilePhoto = null)
+    public void ShowWinPanel(string winnerLabel, float time, bool isHighScore, Texture2D profilePhoto = null)
     {
         if (winPanelEl == null) return;
 
         winPanelEl.style.display = DisplayStyle.Flex;
 
         if (winnerTextEl != null)
-            winnerTextEl.text = $"Player {playerNumber} Wins!";
+            winnerTextEl.text = winnerLabel;
 
         if (winnerPhotoEl != null)
         {
@@ -274,14 +281,22 @@ public class UIManager : MonoBehaviour
             highScoreLabelEl.text = isHighScore ? "NEW HIGH SCORE!" : "";
 
             // Blink the high score label
+            highScoreLabelVisible = true;
+            highScoreLabelEl.style.opacity = 1f;
             if (isHighScore)
             {
-                highScoreLabelVisible = true;
-                highScoreLabelEl.schedule.Execute(() =>
+                if (highScoreBlink == null)
                 {
-                    highScoreLabelVisible = !highScoreLabelVisible;
-                    highScoreLabelEl.style.opacity = highScoreLabelVisible ? 1f : 0f;
-                }).Every(500);
+                    highScoreBlink = highScoreLabelEl.schedule.Execute(() =>
+                    {
+                        highScoreLabelVisible = !highScoreLabelVisible;
+                        highScoreLabelEl.style.opacity = highScoreLabelVisible ? 1f : 0f;
+                    }).Every(500);
+                }
+                else
+                {
+                    highScoreBlink.Resume();
+                }
             }
         }
 
@@ -290,12 +305,20 @@ public class UIManager : MonoBehaviour
         if (instructionsEl != null)
         {
             instructionsEl.text = "Raise hands to play again";
-            bool visible = true;
-            instructionsEl.schedule.Execute(() =>
+            instructionsVisible = true;
+            instructionsEl.style.opacity = 1f;
+            if (instructionsBlink == null)
             {
-                visible = !visible;
-                instructionsEl.style.opacity = visible ? 1f : 0f;
-            }).Every(750);
+                instructionsBlink = instructionsEl.schedule.Execute(() =>
+                {
+                    instructionsVisible = !instructionsVisible;
+                    instructionsEl.style.opacity = instructionsVisible ? 1f : 0f;
+                }).Every(750);
+            }
+            else
+            {
+                instructionsBlink.Resume();
+            }
         }
 
         // Start countdown

@@ -56,13 +56,15 @@ StartScreen
     WaitingForP1Detection → body detected
     WaitingForP1Confirm   → field goal held 1s → P1 assigned
     WaitingForP2           → 10s countdown begins
-    WaitingForP2Confirm   → field goal held 1s → P2 assigned (or timeout → P1 only)
-    Launching             → load GameScreen
+    WaitingForP2Confirm   → field goal held 1s → P2 assigned (or timeout → P1 vs CPU)
+    Launching             → load GameScreen (sets GameSession.VsCpu when only P1 joined)
+  Dev builds/Editor: K = keyboard 2P, V = keyboard vs CPU (skips the ZED)
                                 |
 GameScreen
   GameScreenManager reads assignments from ZEDTrackingProvider
   Activates assigned players, attaches BodyTrackingInput
-  Falls back to keyboard if no ZED assignments
+  GameSession.VsCpu → Player2 driven by CpuPlayerInput
+  Falls back to keyboard if no ZED assignments (keyboardVsCpu → Player2 is the CPU)
                                 |
   DoorPairGenerator.Generate()
                                 |
@@ -98,9 +100,10 @@ GameScreen
 ## ZED Body Tracking Architecture
 
 ```
-ZED_Rig_Mono (DontDestroyOnLoad, persists across scenes)
+ZED_Rig_Mono (DontDestroyOnLoad via ZEDManager.dontDestroyOnLoad, persists across scenes)
 ├── ZEDManager            # Camera connection, body detection, fires OnBodyTracking events
 ├── ZEDTrackingProvider   # Singleton. Player-body assignments, re-identification, events
+├── ZEDRigGuard           # Runs first; deactivates the scene copy loaded when StartScreen reopens
 └── Camera_Left           # Small viewport preview (top-left corner, toggleable)
       └── Frame           # Rendering plane for camera feed
 ```
@@ -112,7 +115,7 @@ ZED_Rig_Mono (DontDestroyOnLoad, persists across scenes)
 3. For each assigned player: fires `OnPlayerBodyUpdated(playerNumber, body)` or `OnPlayerBodyLost(playerNumber)`
 4. **BodyTrackingInput** (on each player) receives events, translates to movement:
    - Pelvis X → mapped from physical space (-1.5m to +1.5m) to game space (-6.5 to +6.5) via velocity
-   - Field goal gesture rising edge + grounded → jump impulse
+   - Jump (`jumpMethod`, default `PhysicalJump`): pelvis rising above a baseline, or field goal gesture rising edge → `PlayerController.TryJump()`
 
 ### Player-Body Assignment
 
@@ -126,7 +129,9 @@ ZED_Rig_Mono (DontDestroyOnLoad, persists across scenes)
 - 1s grace period before showing lost indicator
 - 10s timeout in Lost state → `GameScreenManager.RemovePlayer()`
 - Recovery at any point cancels the timer
-- If all players removed → return to StartScreen after 2s delay
+- If all human players removed → return to StartScreen after 2s delay (the CPU doesn't count)
+- `PlayerController.ResetPlayer` raises `OnReset`; BodyTrackingInput clears its tracking-loss state on restart
+- Freezes are tracked per reason (Portal / TrackingLoss / Win), so recovering tracking mid-teleport can't unfreeze the portal animation
 
 ## Key Design Decisions
 
@@ -150,9 +155,18 @@ ZED_Rig_Mono (DontDestroyOnLoad, persists across scenes)
 
 ### Controls
 
-- **Primary**: ZED 2i body tracking (pelvis for X movement, field goal gesture for jump)
-- **Fallback**: Keyboard (Player 1: A/D/W, Player 2: Arrows). Active when `useBodyTracking = false`
-- **Debug**: Q key teleports Player 1 to WinZone for instant win (GameScreen only, while Playing)
+- **Primary**: ZED 2i body tracking (pelvis for X movement, physical jump or field goal gesture for jump)
+- **Fallback**: Keyboard (Player 1: A/D/W, Player 2: Arrows). Active when `useExternalInput = false`
+- **CPU**: `CpuPlayerInput` on Player2 in vs-CPU mode (see CPU Opponent below)
+- **Debug** (Editor/development builds only): Q teleports Player 1 to WinZone for instant win; T toggles the tutorial; K/V in the lobby launch keyboard 2P / vs CPU
+
+### CPU Opponent
+
+- `CpuPlayerInput` sits disabled on Player2; `GameScreenManager.SetupCpuPlayer` enables it and sets `PlayerController.isCpu`
+- Each landing: compute teleports-to-win per floor from the door pairs (`PortalDoor.beltIndex`, `DoorPairGenerator.GetDoorsOnBelt`), pick the door on the belt above with the fewest hops left (travel time breaks ties), steer under it with belt-speed feed-forward, jump when lined up
+- Difficulty fields: `speedMultiplier`, `reactionTimeRange`, `jumpHesitationRange`, `wrongDoorChance` (random door that never goes down), `missChance` (lines up just outside the door's overlap window), `aimJitter`. Context menu has Easy/Normal/Hard presets
+- Stands still while a human is frozen for tracking loss (`pauseWhileOpponentTrackingLost`), and always once no human is left (e.g. during the return-to-lobby delay)
+- CPU wins show "CPU Wins!", play `SFXManager.voiceCpuWins` (falls back to `voiceP2Wins`), and are never added to high scores
 
 ### Movement Mapping
 
@@ -163,7 +177,7 @@ ZED_Rig_Mono (DontDestroyOnLoad, persists across scenes)
 
 ### Input Separation
 
-- `BodyTrackingInput` is a separate component from `PlayerController`
+- `BodyTrackingInput` and `CpuPlayerInput` are separate components from `PlayerController`; both drive it through `SetHorizontalVelocity()` / `TryJump()` with `useExternalInput = true`
 - Keeps existing keyboard code clean; game remains playable without ZED
 - Rising-edge gesture detection prevents repeat-jumping while arms are raised
 - Hold-duration gesture for lobby confirmation prevents accidental activation
