@@ -24,6 +24,13 @@ Assets/
   Shaders/
     PortalSpiral.shader       # Animated spiral effect for portal doors
     FinishLineCheckered.shader  # Checkered pattern with wind animation and clip-side slicing
+  VFX/
+    JumpDust.vfx              # OnJump: dust puff at the feet
+    PortalIn.vfx              # OnPortalIn: door-coloured ring collapsing into the entry door
+    PortalOut.vfx             # OnPortalOut: door-coloured burst out of the exit door
+    ConfettiRain.vfx          # OnWin: 2.5s of confetti raining over the whole screen
+    ConfettiBurst.vfx         # OnWinBurst: confetti fountain from the winner
+    Textures/vfx_white.png    # Plain white quad texture (solid square particles)
   UI/
     Fonts/
       PressStart2P-Regular.ttf  # NES pixel font (Google Fonts, OFL license)
@@ -166,7 +173,7 @@ ZED_Rig_Mono (DontDestroyOnLoad via ZEDManager.dontDestroyOnLoad, persists acros
 - Each landing: compute teleports-to-win per floor from the door pairs (`PortalDoor.beltIndex`, `DoorPairGenerator.GetDoorsOnBelt`), pick the door on the belt above with the fewest hops left (travel time breaks ties), steer under it with belt-speed feed-forward, jump when lined up
 - Difficulty fields: `speedMultiplier`, `reactionTimeRange`, `jumpHesitationRange`, `wrongDoorChance` (random door that never goes down), `missChance` (lines up just outside the door's overlap window), `aimJitter`. Context menu has Easy/Normal/Hard presets
 - Stands still while a human is frozen for tracking loss (`pauseWhileOpponentTrackingLost`), and always once the race had humans but none is left (e.g. during the return-to-lobby delay). A CPU-only race never waits
-- A CPU beating a human shows "CPU Wins!" and plays `SFXManager.voiceCpuWins` (falls back to `voiceP2Wins`); CPU wins are never added to high scores
+- A CPU beating a human shows "CPU Wins!" and plays `voiceP2Wins` (the CPU is always Player2); CPU wins are never added to high scores
 
 ### CPU vs CPU Demo
 
@@ -231,6 +238,15 @@ ZED_Rig_Mono (DontDestroyOnLoad via ZEDManager.dontDestroyOnLoad, persists acros
 - Two halves created with material clip parameters (`_ClipSide`, `_ClipX`), physics rigidbodies kick them outward
 - Halves self-destruct after 5 seconds
 - `ResetFinishLine()` called by `GameManager.Restart()` to restore the ribbon
+
+### Visual Effects (VFX Graph)
+
+- `GameVfx` (singleton on the `GameVfx` object in GameScreen) fires five event-triggered VFX Graph bursts. Hooks: `PlayerController.TryJump` → jump dust; the teleport coroutine → portal in (entry door position + colour) and portal out (exit, after the pause); `GameManager.PlayerWon` → confetti rain + winner burst; `GameManager.Restart` → `ClearAll()` (Reinit)
+- Each effect simulates in world space and takes `position` / `color` event attributes, so one `VisualEffect` can fire anywhere. Jump and portal effects get one instance per player because a `VisualEffect` merges two `SendEvent` calls in the same frame into one burst
+- **Rendering constraint:** the Balanced renderer draws only UI/NoPixel itself (opaque/transparent masks = 96); every other layer is drawn by the pixel pass (`BasicFeature`), which draws **opaque queues only**. So effects use **Opaque** outputs on the Default layer, solid square particles (white texture), which get pixelated, posterized and outlined like the characters. A transparent output would be invisible; the NoPixel layer would be overwritten by the pixel blit
+- VFX Graph shaders draw in the `UniversalForwardOnly` pass, which `BasicFeaturePass` now includes in its shader tag list (no existing scene material uses that tag)
+- Colours: VFX colour attributes and gradient keys are linear. `GameVfx` sends `doorColor.linear`; the confetti palette (Random Number → Sample Gradient → Set Color, one pick per piece) is stored linearised
+- Particles at the same depth fuse under the outline pass (outlines come from depth edges), which is why rings and puffs read as single shapes; jump dust has a small z jitter
 
 ### UI System
 

@@ -38,6 +38,9 @@ namespace UnityEngine.Experimental.Rendering.Universal
             m_ShaderTagIdList.Add(new ShaderTagId("UniversalForward"));
             m_ShaderTagIdList.Add(new ShaderTagId("LightweightForward"));
             m_ShaderTagIdList.Add(new ShaderTagId("SRPDefaultUnlit"));
+            // VFX Graph outputs (and URP Unlit/Complex Lit) draw in UniversalForwardOnly;
+            // without it they're skipped here, and the camera's own passes don't draw these layers
+            m_ShaderTagIdList.Add(new ShaderTagId("UniversalForwardOnly"));
 
             m_RenderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
         }

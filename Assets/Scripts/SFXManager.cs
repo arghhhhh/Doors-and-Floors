@@ -16,8 +16,6 @@ public class SFXManager : MonoBehaviour
     public AudioClip voiceWinner;
     public AudioClip voiceP1Wins;
     public AudioClip voiceP2Wins;
-    [Tooltip("Played when the CPU wins; falls back to voiceP2Wins if unassigned")]
-    public AudioClip voiceCpuWins;
     public AudioClip voiceNewHighscore;
     public AudioClip voiceTrackingLost;
     public AudioClip sfxReturnHome;

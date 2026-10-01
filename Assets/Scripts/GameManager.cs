@@ -163,9 +163,7 @@ public class GameManager : MonoBehaviour
         if (SFXManager.Instance != null)
         {
             if (cpuBeatHuman)
-                SFXManager.Instance.Play(SFXManager.Instance.voiceCpuWins != null
-                    ? SFXManager.Instance.voiceCpuWins
-                    : SFXManager.Instance.voiceP2Wins);
+                SFXManager.Instance.Play(SFXManager.Instance.voiceP2Wins); // the CPU is always Player2
             else if (players.Length <= 1)
                 SFXManager.Instance.Play(SFXManager.Instance.voiceWinner);
             else if (playerNumber == 1)
@@ -173,6 +171,8 @@ public class GameManager : MonoBehaviour
             else
                 SFXManager.Instance.Play(SFXManager.Instance.voiceP2Wins);
         }
+
+        GameVfx.Instance?.PlayWin(winner);
 
         if (uiManager != null)
         {
@@ -222,6 +222,9 @@ public class GameManager : MonoBehaviour
         // Hide win panel
         if (uiManager != null)
             uiManager.HideWinPanel();
+
+        // Clear leftover confetti and bursts from the last round
+        GameVfx.Instance?.ClearAll();
 
         elapsedTime = 0f;
 

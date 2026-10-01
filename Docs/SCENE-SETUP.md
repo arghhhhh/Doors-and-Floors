@@ -57,6 +57,7 @@ Player1              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + Pla
 Player2              Layer: Player(9), scale (0.34, 0.34, 0.34), Rigidbody + PlayerController + CpuPlayerInput (disabled; enabled in vs-CPU mode)
 GameManager          Empty, GameManager + DoorPairGenerator + HighScoreManager
 GameScreenManager    Empty, GameScreenManager + UIManager + UIDocument (GameScreen.uxml)
+GameVfx              Empty, Layer: Default (must be a pixel-pass layer), GameVfx with the five VFX assets; spawns per-player VisualEffect children at runtime
 FinishLine           BoxCollider(trigger, size 14x0.5x2), FinishLine script, Y=12.25
   └── [FinishLineRibbon]  Child mesh (FinishLineRibbon.fbx) with FinishLineCheckered material
 WinZone              BoxCollider(trigger), WinTrigger, position (0, 12.5, 0), scale (14, 1, 1)

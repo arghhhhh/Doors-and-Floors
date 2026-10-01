@@ -1104,6 +1104,61 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &644806550
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 644806552}
+  - component: {fileID: 644806551}
+  m_Layer: 0
+  m_Name: GameVfx
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &644806551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644806550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d51a07cd616c7f4683fe4745073e6f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  jumpDust: {fileID: 8926484042661614526, guid: 66ee5d8d79e031342adff63d98ea6c6a,
+    type: 3}
+  portalIn: {fileID: 8926484042661614526, guid: 0bb35d7aa92d9cd409e502fa867bb7a8,
+    type: 3}
+  portalOut: {fileID: 8926484042661614526, guid: 4ae7bac2d2bb01d48b955f336899ae7f,
+    type: 3}
+  confettiRain: {fileID: 8926484042661614526, guid: 83efecf5ebdc9f94284d75e22451fde5,
+    type: 3}
+  confettiBurst: {fileID: 8926484042661614526, guid: 2acb0797788787f4586e5584916a455c,
+    type: 3}
+  portalEffectZ: -0.5
+--- !u!4 &644806552
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 644806550}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &732680649
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1371,8 +1426,8 @@ MonoBehaviour:
   trackingLostShader: {fileID: 4800000, guid: 65e7317974d11e740bf1c1825d420284, type: 3}
   keyboardVsCpu: 0
   cpuProfilePhoto: {fileID: 0}
-  cpuVsCpuDemo: 0
-  demoTimeScale: 1
+  cpuVsCpuDemo: 1
+  demoTimeScale: 3.29
   demoRestartDelay: 5
   startScreenSceneName: StartScreen
   returnToStartDelay: 2
@@ -2370,3 +2425,4 @@ SceneRoots:
   - {fileID: 875847980}
   - {fileID: 881329856}
   - {fileID: 79190193}
+  - {fileID: 644806552}

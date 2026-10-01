@@ -203,6 +203,7 @@ public class PlayerController : MonoBehaviour
     {
         if (IsFrozen || !isGrounded) return false;
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        GameVfx.Instance?.PlayJump(this);
         return true;
     }
 
@@ -271,6 +272,11 @@ public class PlayerController : MonoBehaviour
         float centerOffsetY = capsule != null ? capsule.center.y * originalScale.y : 0.5f;
         Vector3 shrinkOrigin = transform.position;
 
+        // Paired doors share a colour, so the entry door's colour also tints the exit burst
+        PortalDoor entryPortal = entryDoor != null ? entryDoor.GetComponent<PortalDoor>() : null;
+        Color portalColor = entryPortal != null ? entryPortal.doorColor : Color.white;
+        GameVfx.Instance?.PlayPortalIn(this, entryDoor != null ? entryDoor.position : shrinkOrigin, portalColor);
+
         // --- Shrink at entry (pull toward door's live position) ---
         float elapsed = 0f;
         while (elapsed < portalShrinkDuration)
@@ -312,6 +318,8 @@ public class PlayerController : MonoBehaviour
         // Brief pause at zero scale
         yield return new WaitForSeconds(0.05f);
         if (gen != resetGeneration) yield break;
+
+        GameVfx.Instance?.PlayPortalOut(this, destPos + Vector3.up * centerOffsetY, portalColor);
 
         // --- Grow at exit (scale around center) ---
         Vector3 growOrigin = transform.position;

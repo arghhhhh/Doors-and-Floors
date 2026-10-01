@@ -9,6 +9,7 @@ Read the script itself for method signatures and field details. Keep this table 
 | `PlayerController.cs` | Movement, jumping, portal teleport animation, per-reason freezes, `SetHorizontalVelocity`/`TryJump` input API, `OnReset` event, animator driving |
 | `CpuPlayerInput.cs` | CPU opponent: picks doors by teleports-to-win, tracks the belt, jumps; difficulty fields + presets |
 | `GameSession.cs` | Static lobby → game settings (`VsCpu`) |
+| `GameVfx.cs` | VFX Graph bursts: jump dust, portal in/out, win confetti; per-player instances, event attributes |
 | `PortalDoor.cs` | Teleport triggers, swivel animation, spiral shader params, cooldown system |
 | `ConveyorBelt.cs` | Horizontal door movement, ghost clone wrapping, boundary detection |
 | `DoorPairGenerator.cs` | Procedural door generation with critical path guarantee, color pairing |

@@ -121,3 +121,4 @@ InitTestScene*.unity*
 .unity/cache/
 .unity/symbol-index.json
 .unity/symbol-index.json.meta
+.unity/capture/
