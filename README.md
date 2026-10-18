@@ -17,6 +17,8 @@ https://github.com/user-attachments/assets/b142a8a5-af48-40ba-a1b3-932d8fc37937
 5. **Watch out:** doors work both ways, so some lead *down*. The first player to land on the top floor wins.
 6. **Raise your arms** on the win screen to play again.
 
+Staff can press `Esc` or click the middle mouse button at any time to return to the lobby.
+
 ## Features
 
 - **Body tracking:** ZED 2i skeleton tracking for movement, jumping and gesture-based menus, including recovery when a player briefly leaves the frame.
@@ -52,7 +54,8 @@ In the Editor and development builds you can skip the camera entirely:
 | Lobby | `V` | Start a keyboard game against the CPU |
 | Game | `A` / `D`, `W` | Player 1 move, jump |
 | Game | `←` / `→`, `↑` | Player 2 move, jump |
-| Win screen | `Enter` / `Esc` | Play again / back to menu |
+| Win screen | `Enter` | Play again |
+| Game (any time) | `Esc` / middle mouse | Back to the lobby |
 
 You can also open `Assets/Scenes/GameScreen.unity` directly to play on the keyboard.
 

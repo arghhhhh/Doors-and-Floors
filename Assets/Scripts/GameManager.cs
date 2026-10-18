@@ -88,6 +88,13 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        // Escape hatch: Escape or middle mouse returns to the lobby from any state
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(2))
+        {
+            ReturnToMenu();
+            return;
+        }
+
         if (CurrentState == GameState.Playing)
         {
             elapsedTime += Time.deltaTime;
@@ -125,10 +132,6 @@ public class GameManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Return))
             {
                 Restart();
-            }
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                ReturnToMenu();
             }
         }
     }
@@ -191,6 +194,7 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMenu()
     {
+        if (Instance != this) return; // already leaving (e.g. Escape on the same frame as the time limit)
         showedTutorial = false;
         SFXManager.Instance?.Play(SFXManager.Instance?.sfxReturnHome);
 

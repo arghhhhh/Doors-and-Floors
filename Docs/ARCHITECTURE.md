@@ -93,8 +93,10 @@ GameScreen
                       10s countdown to auto-return to menu
                                 |
               Hands-up gesture (1s hold) → Restart()
-              Enter key → Restart()  |  Escape key → StartScreen
+              Enter key → Restart()
               Countdown expires → StartScreen
+
+   Escape key or middle mouse → StartScreen, from any state (tutorial, race, win)
                                 |
                       Reset players to Floor_0
                       Reset finish line ribbon
@@ -257,7 +259,7 @@ UI uses App UI (UI Toolkit) with NES pixel theme, replacing the original legacy 
 - **Layouts**: UXML files define declarative UI structure, queried via `Q<T>("name")` in scripts
 - **Blinking**: Implemented via `schedule.Execute().Every(500)` toggling opacity (no CSS keyframes in 2022.3)
 - **Input passthrough**: Root panel uses `picking-mode: ignore` so gameplay clicks pass through
-- **Win panel**: Shows winner, profile photo, time, high scores, then a restart row with gesture icon (frame_last.png at 48px) + "Raise hands to play again" text, and a 10s countdown. UIManager detects field-goal gesture from any tracked body (1s hold) to restart, or auto-returns to menu on countdown expiry. Keyboard shortcuts (Enter/Escape) still work for testing.
+- **Win panel**: Shows winner, profile photo, time, high scores, then a restart row with gesture icon (frame_last.png at 48px) + "Raise hands to play again" text, and a 10s countdown. UIManager detects field-goal gesture from any tracked body (1s hold) to restart, or auto-returns to menu on countdown expiry. Keyboard shortcuts (Enter/Escape) still work for testing; Escape and middle mouse also leave mid-race.
 
 ### Restart Strategy
 
