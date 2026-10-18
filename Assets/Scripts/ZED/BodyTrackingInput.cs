@@ -176,7 +176,7 @@ public class BodyTrackingInput : MonoBehaviour
             case TrackingState.Lost:
                 lostTimer += Time.deltaTime;
                 if (trackingLostTimerText != null)
-                    trackingLostTimerText.text = $"{Mathf.CeilToInt(trackingLossTimeout - lostTimer)}s";
+                    trackingLostTimerText.text = $"RAISE ARMS {Mathf.CeilToInt(trackingLossTimeout - lostTimer)}s";
 
                 if (lostTimer >= trackingLossTimeout)
                 {

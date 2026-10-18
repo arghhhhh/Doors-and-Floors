@@ -280,6 +280,7 @@ public class GameScreenManager : MonoBehaviour
         timerText.color = Color.red;
         timerText.fontSize = 20;
         timerText.alignment = TextAnchor.MiddleCenter;
+        timerText.horizontalOverflow = HorizontalWrapMode.Overflow;
         timerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         RectTransform timerRect = timerObj.GetComponent<RectTransform>();
         timerRect.anchoredPosition = new Vector2(0, -25f);

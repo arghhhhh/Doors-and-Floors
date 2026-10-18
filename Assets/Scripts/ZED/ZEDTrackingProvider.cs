@@ -23,15 +23,23 @@ public class ZEDTrackingProvider : MonoBehaviour
     // Body ID → DetectedBody (updated each frame)
     Dictionary<int, DetectedBody> currentBodies = new Dictionary<int, DetectedBody>();
 
-    // Last known world X per player (for re-identification)
-    Dictionary<int, float> lastKnownPlayerX = new Dictionary<int, float>();
+    // Last known world pelvis position per player (for re-identification)
+    Dictionary<int, Vector3> lastKnownPlayerPos = new Dictionary<int, Vector3>();
+
+    // Players whose body is currently missing (used for one-shot logging and gesture reclaim)
+    HashSet<int> lostPlayers = new HashSet<int>();
+
+    // Unassigned body ID → time it started holding the field goal gesture
+    Dictionary<int, float> reclaimGestureStart = new Dictionary<int, float>();
 
     // Player number → captured face photo (persists across scenes via DontDestroyOnLoad)
     Dictionary<int, Texture2D> playerProfilePhotos = new Dictionary<int, Texture2D>();
 
     [Header("Re-identification")]
-    [Tooltip("Max distance in meters to auto-reassign a lost body")]
+    [Tooltip("Max floor distance (X/Z, meters) to auto-reassign a lost player to a new body")]
     public float reidentificationRadius = 1.0f;
+    [Tooltip("In GameScreen, a lost player can reclaim their slot by holding both arms up for this long (seconds)")]
+    public float reclaimGestureHold = 0.5f;
 
     // Events
     public event Action<int, DetectedBody> OnPlayerBodyUpdated;  // (playerNumber, body)
@@ -173,8 +181,9 @@ public class ZEDTrackingProvider : MonoBehaviour
                 // Body still tracked — update last known position and fire event
                 Vector3 pelvisWorld = GetKeypointWorld(body, (int)BODY_38_PARTS.PELVIS);
                 if (float.IsFinite(pelvisWorld.x))
-                    lastKnownPlayerX[playerNumber] = pelvisWorld.x;
+                    lastKnownPlayerPos[playerNumber] = pelvisWorld;
 
+                MarkFound(playerNumber);
                 OnPlayerBodyUpdated?.Invoke(playerNumber, body);
             }
             else
@@ -183,17 +192,20 @@ public class ZEDTrackingProvider : MonoBehaviour
                 bool reidentified = TryReidentify(playerNumber);
                 if (!reidentified)
                 {
+                    if (lostPlayers.Add(playerNumber))
+                        LogLoss(playerNumber, assignedBodyId);
                     OnPlayerBodyLost?.Invoke(playerNumber);
                 }
             }
         }
+
+        TryGestureReclaim();
     }
 
     bool TryReidentify(int playerNumber)
     {
-        if (!lastKnownPlayerX.ContainsKey(playerNumber)) return false;
+        if (!lastKnownPlayerPos.TryGetValue(playerNumber, out Vector3 lastPos)) return false;
 
-        float lastX = lastKnownPlayerX[playerNumber];
         var assignedBodyIds = new HashSet<int>(playerBodyAssignments.Values);
 
         DetectedBody bestMatch = null;
@@ -206,7 +218,8 @@ public class ZEDTrackingProvider : MonoBehaviour
             Vector3 pelvis = GetKeypointWorld(kvp.Value, (int)BODY_38_PARTS.PELVIS);
             if (!float.IsFinite(pelvis.x)) continue;
 
-            float dist = Mathf.Abs(pelvis.x - lastX);
+            // Floor distance (X and depth), so a spectator standing behind the player doesn't match
+            float dist = FloorDistance(pelvis, lastPos);
             if (dist < bestDist)
             {
                 bestDist = dist;
@@ -217,12 +230,106 @@ public class ZEDTrackingProvider : MonoBehaviour
         if (bestMatch != null)
         {
             playerBodyAssignments[playerNumber] = bestMatch.id;
-            Debug.Log($"[ZEDTrackingProvider] Re-identified P{playerNumber} as body {bestMatch.id}");
+            Debug.Log($"[ZEDTrackingProvider] Re-identified P{playerNumber} as body {bestMatch.id} ({bestDist:F2}m from last position)");
+            MarkFound(playerNumber);
             OnPlayerBodyUpdated?.Invoke(playerNumber, bestMatch);
             return true;
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// GameScreen only: a lost player who walked too far for re-identification (or whose
+    /// slot was taken by the wrong body) gets it back by holding the field goal gesture.
+    /// Disabled in the lobby, where that same gesture registers new players.
+    /// </summary>
+    void TryGestureReclaim()
+    {
+        if (lostPlayers.Count == 0 || GameManager.Instance == null)
+        {
+            reclaimGestureStart.Clear();
+            return;
+        }
+
+        var assignedBodyIds = new HashSet<int>(playerBodyAssignments.Values);
+        var seen = new HashSet<int>();
+
+        foreach (var kvp in currentBodies)
+        {
+            int bodyId = kvp.Key;
+            if (assignedBodyIds.Contains(bodyId)) continue;
+
+            DetectedBody body = kvp.Value;
+            int count = body.rawBodyData.keypoint?.Length ?? 0;
+            var keypoints = new Vector3[count];
+            for (int i = 0; i < count; i++)
+                keypoints[i] = GetKeypointWorld(body, i);
+
+            if (!GestureDetector.IsFieldGoalGesture(keypoints, body.rawBodyData.keypointConfidence))
+                continue;
+
+            seen.Add(bodyId);
+            if (!reclaimGestureStart.TryGetValue(bodyId, out float start))
+            {
+                reclaimGestureStart[bodyId] = Time.unscaledTime;
+                continue;
+            }
+            if (Time.unscaledTime - start < reclaimGestureHold) continue;
+
+            // Give the body to the lost player whose last position is closest
+            Vector3 pelvis = GetKeypointWorld(body, (int)BODY_38_PARTS.PELVIS);
+            int bestPlayer = -1;
+            float bestDist = float.PositiveInfinity;
+            foreach (int p in lostPlayers)
+            {
+                float d = lastKnownPlayerPos.TryGetValue(p, out Vector3 last) && float.IsFinite(pelvis.x)
+                    ? FloorDistance(pelvis, last)
+                    : float.MaxValue;
+                if (bestPlayer < 0 || d < bestDist) { bestDist = d; bestPlayer = p; }
+            }
+
+            playerBodyAssignments[bestPlayer] = bodyId;
+            if (float.IsFinite(pelvis.x))
+                lastKnownPlayerPos[bestPlayer] = pelvis;
+            Debug.Log($"[ZEDTrackingProvider] P{bestPlayer} reclaimed with gesture as body {bodyId}");
+            reclaimGestureStart.Remove(bodyId);
+            MarkFound(bestPlayer);
+            OnPlayerBodyUpdated?.Invoke(bestPlayer, body);
+            return; // one reclaim per frame; assignments changed
+        }
+
+        // Forget bodies that dropped the gesture or disappeared
+        var stale = new List<int>();
+        foreach (int id in reclaimGestureStart.Keys)
+            if (!seen.Contains(id)) stale.Add(id);
+        foreach (int id in stale)
+            reclaimGestureStart.Remove(id);
+    }
+
+    void MarkFound(int playerNumber)
+    {
+        if (lostPlayers.Remove(playerNumber))
+            Debug.Log($"[ZEDTrackingProvider] P{playerNumber} tracking recovered");
+    }
+
+    void LogLoss(int playerNumber, int lostBodyId)
+    {
+        string last = lastKnownPlayerPos.TryGetValue(playerNumber, out Vector3 p)
+            ? $"({p.x:F2}, {p.z:F2})" : "unknown";
+        var others = new System.Text.StringBuilder();
+        foreach (var kvp in currentBodies)
+        {
+            Vector3 pelvis = GetKeypointWorld(kvp.Value, (int)BODY_38_PARTS.PELVIS);
+            others.Append($" {kvp.Key}@({pelvis.x:F2}, {pelvis.z:F2})");
+        }
+        Debug.Log($"[ZEDTrackingProvider] P{playerNumber} lost body {lostBodyId}, last X/Z {last}; bodies in view:{(others.Length > 0 ? others.ToString() : " none")}");
+    }
+
+    static float FloorDistance(Vector3 a, Vector3 b)
+    {
+        float dx = a.x - b.x, dz = a.z - b.z;
+        return Mathf.Sqrt(dx * dx + dz * dz);
     }
 
     // --- Public API ---
@@ -236,14 +343,17 @@ public class ZEDTrackingProvider : MonoBehaviour
     public void UnassignPlayer(int playerNumber)
     {
         playerBodyAssignments.Remove(playerNumber);
-        lastKnownPlayerX.Remove(playerNumber);
+        lastKnownPlayerPos.Remove(playerNumber);
+        lostPlayers.Remove(playerNumber);
         Debug.Log($"[ZEDTrackingProvider] Unassigned P{playerNumber}");
     }
 
     public void ClearAllAssignments()
     {
         playerBodyAssignments.Clear();
-        lastKnownPlayerX.Clear();
+        lastKnownPlayerPos.Clear();
+        lostPlayers.Clear();
+        reclaimGestureStart.Clear();
         foreach (var tex in playerProfilePhotos.Values)
         {
             if (tex != null) Destroy(tex);

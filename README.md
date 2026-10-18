@@ -17,7 +17,7 @@ https://github.com/user-attachments/assets/b142a8a5-af48-40ba-a1b3-932d8fc37937
 5. **Watch out:** doors work both ways, so some lead *down*. The first player to land on the top floor wins.
 6. **Raise your arms** on the win screen to play again.
 
-Staff can press `Esc` or click the middle mouse button at any time to return to the lobby.
+If the camera loses you mid-race, step back into view and raise your arms within 10 seconds to take your character back. Staff can press `Esc` or click the middle mouse button at any time to return to the lobby.
 
 ## Features
 

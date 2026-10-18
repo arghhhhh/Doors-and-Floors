@@ -130,12 +130,15 @@ ZED_Rig_Mono (DontDestroyOnLoad via ZEDManager.dontDestroyOnLoad, persists acros
 
 - Managed by `ZEDTrackingProvider.playerBodyAssignments` (playerNumber → bodyId)
 - Set during StartScreen lobby via `AssignBodyToPlayer()`
-- Re-identification: when assigned body lost and new unassigned body appears near last known X, auto-reassign
+- Re-identification: when assigned body lost and new unassigned body appears within `reidentificationRadius` (1m) of the last known floor position (X and Z, so spectators standing behind don't match), auto-reassign
+- Gesture reclaim (GameScreen only, while `GameManager` exists): a lost player who is out of re-ID range gets their slot back when any unassigned body holds the field goal gesture for `reclaimGestureHold` (0.5s); with several lost players, the nearest last position wins. Disabled in the lobby, where the gesture registers players
+- Each loss is logged once with the last position and every body in view (`P2 lost body 5, last X/Z ...`), for diagnosing drops from `Player.log`
 
 ### Tracking Loss Handling
 
 - **BodyTrackingInput** manages 3 states: `Tracking → Searching → Lost`
 - 1s grace period before showing lost indicator
+- Lost indicator reads "X TRACKING LOST" over a "RAISE ARMS Ns" countdown (raising arms triggers gesture reclaim)
 - 10s timeout in Lost state → `GameScreenManager.RemovePlayer()`
 - Recovery at any point cancels the timer
 - If all human players removed → return to StartScreen after 2s delay (the CPU doesn't count)

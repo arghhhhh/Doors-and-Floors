@@ -24,7 +24,7 @@ Read the script itself for method signatures and field details. Keep this table 
 ## ZED Integration (Assets/Scripts/ZED/)
 | Script | Role |
 |--------|------|
-| `ZEDTrackingProvider.cs` | Persistent singleton: body tracking hub, player assignments, re-identification |
+| `ZEDTrackingProvider.cs` | Persistent singleton: body tracking hub, player assignments, re-identification, gesture reclaim of lost players |
 | `StartScreenManager.cs` | Lobby 5-state machine: P1 Detection → P1 Confirm → P2 Waiting → P2 Confirm → Launching |
 | `GameScreenManager.cs` | Scene orchestrator: activates tracked players, CPU opponent, keyboard fallback, or CPU vs CPU demo loop |
 | `BodyTrackingInput.cs` | Per-player input adapter: pelvis X mapping, jump gesture, tracking loss |
