@@ -33,6 +33,7 @@ Read the script itself for method signatures and field details. Keep this table 
 | `TrackingLostOverlay.cs` | Visual feedback when player tracking is lost |
 | `FaceCaptureHelper.cs` | Captures player face photos for high score display |
 | `ZEDRigGuard.cs` | Runs first on ZED_Rig_Mono; deactivates the duplicate rig when StartScreen reloads |
+| `ZEDSpoutFeed.cs` | Sends the ZED left image over Spout (with `ZEDSpoutBlit.shader`) so OBS can record it; goes on ZED_Rig_Mono |
 | `ZEDPreviewDisabler.cs` | Hides the ZED camera preview (Camera_Left + Frame) once the ZED is ready; goes on ZED_Rig_Mono |
 
 ## Key Relationships

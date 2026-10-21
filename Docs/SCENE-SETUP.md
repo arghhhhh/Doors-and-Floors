@@ -12,6 +12,8 @@ ZED_Rig_Mono         Prefab instance (DontDestroyOnLoad)
   ├── ZEDManager       Camera connection, body tracking, bodyFormat=BODY_38
   ├── ZEDTrackingProvider  Singleton, player-body assignments
   ├── ZEDRigGuard      Deactivates this copy if a persistent rig already exists
+  ├── SpoutSender      KlakSpout, captureMethod=Texture, name "ZED Camera"
+  ├── ZEDSpoutFeed     Feeds the ZED image to SpoutSender for OBS recording
   └── Camera_Left      Small viewport preview (top-left, 25% of screen, depth=10)
         └── Frame      Rendering plane for camera feed
 StartScreenManager   StartScreenManager + UIDocument (StartScreen.uxml)

@@ -113,9 +113,15 @@ ZED_Rig_Mono (DontDestroyOnLoad via ZEDManager.dontDestroyOnLoad, persists acros
 ├── ZEDManager            # Camera connection, body detection, fires OnBodyTracking events
 ├── ZEDTrackingProvider   # Singleton. Player-body assignments, re-identification, events
 ├── ZEDRigGuard           # Runs first; deactivates the scene copy loaded when StartScreen reopens
+├── SpoutSender           # KlakSpout, Texture mode; fed by ZEDSpoutFeed
+├── ZEDSpoutFeed          # Sends the ZED left image to OBS as Spout source "ZED Camera" (fixes BGRA + flip)
 └── Camera_Left           # Small viewport preview (top-left corner, toggleable)
       └── Frame           # Rendering plane for camera feed
 ```
+
+### Recording the camera feed
+
+The ZED can only be opened by one process, so OBS can't capture it while the game runs. `ZEDSpoutFeed` blits the ZED left texture through `Hidden/ZEDSpoutBlit` (red/blue swap + vertical flip, both toggleable) into a RenderTexture that `SpoutSender` shares. In OBS, install the Spout2 plugin and add a "Spout2 Capture" source for `ZED Camera`.
 
 ### Data Flow
 

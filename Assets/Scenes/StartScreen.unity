@@ -1134,6 +1134,14 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1937953860}
+    - targetCorrespondingSourceObject: {fileID: 1180261165772202, guid: 76db3eb81fd21ae45bab5204e324ae42,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1937953865}
+    - targetCorrespondingSourceObject: {fileID: 1180261165772202, guid: 76db3eb81fd21ae45bab5204e324ae42,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1937953864}
     - targetCorrespondingSourceObject: {fileID: 1795562263255876, guid: 76db3eb81fd21ae45bab5204e324ae42,
         type: 3}
       insertIndex: -1
@@ -1185,6 +1193,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae1e89f41c41eef4197368c5bdc8fccb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1937953864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1937953854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ac5a5e55f0cd9b47993d3769e7df8ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  senderName: ZED Camera
+  flipVertical: 1
+  swapRedBlue: 1
+  blitShader: {fileID: 4800000, guid: 971ac2f8623932049b0ef437be6f7e13, type: 3}
+--- !u!114 &1937953865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1937953854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45099d624c1e6c14e9514f4e5ea1ed9c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _spoutName: ZED Camera
+  _keepAlpha: 0
+  _captureMethod: 2
+  _sourceCamera: {fileID: 0}
+  _sourceTexture: {fileID: 0}
+  _resources: {fileID: 11400000, guid: f449ebbe2051c2e4d993eaa773a410de, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
