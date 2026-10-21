@@ -1426,7 +1426,7 @@ MonoBehaviour:
   trackingLostShader: {fileID: 4800000, guid: 65e7317974d11e740bf1c1825d420284, type: 3}
   keyboardVsCpu: 0
   cpuProfilePhoto: {fileID: 0}
-  cpuVsCpuDemo: 1
+  cpuVsCpuDemo: 0
   demoTimeScale: 3.29
   demoRestartDelay: 5
   startScreenSceneName: StartScreen
