@@ -23,8 +23,13 @@ public class GameManager : MonoBehaviour
     [Tooltip("Maximum game duration in seconds before auto-returning to menu (0 = no limit)")]
     public float maxGameTime = 300f;
 
+    [Header("Win Audio")]
+    [Tooltip("Seconds of silence between the end of the win voice line and the new high score line")]
+    public float highScoreVoiceDelay = 0.5f;
+
     float elapsedTime;
     int winnerPlayerNumber;
+    Coroutine highScoreVoiceRoutine;
 
     void Awake()
     {
@@ -163,16 +168,18 @@ public class GameManager : MonoBehaviour
             && HighScoreManager.Instance.IsHighScore(elapsedTime);
 
         // Play win sound based on player count
+        AudioClip winClip = null;
         if (SFXManager.Instance != null)
         {
             if (cpuBeatHuman)
-                SFXManager.Instance.Play(SFXManager.Instance.voiceP2Wins); // the CPU is always Player2
+                winClip = SFXManager.Instance.voiceP2Wins; // the CPU is always Player2
             else if (players.Length <= 1)
-                SFXManager.Instance.Play(SFXManager.Instance.voiceWinner);
+                winClip = SFXManager.Instance.voiceWinner;
             else if (playerNumber == 1)
-                SFXManager.Instance.Play(SFXManager.Instance.voiceP1Wins);
+                winClip = SFXManager.Instance.voiceP1Wins;
             else
-                SFXManager.Instance.Play(SFXManager.Instance.voiceP2Wins);
+                winClip = SFXManager.Instance.voiceP2Wins;
+            SFXManager.Instance.Play(winClip);
         }
 
         GameVfx.Instance?.PlayWin(winner);
@@ -186,9 +193,27 @@ public class GameManager : MonoBehaviour
 
         if (isHighScore && HighScoreManager.Instance != null)
         {
-            SFXManager.Instance?.Play(SFXManager.Instance?.voiceNewHighscore);
+            float winClipLength = winClip != null ? winClip.length : 0f;
+            highScoreVoiceRoutine = StartCoroutine(PlayHighScoreVoiceAfter(winClipLength + highScoreVoiceDelay));
             Texture2D photo = winner != null ? winner.profilePhoto : null;
             HighScoreManager.Instance.AddScore($"Player {playerNumber}", elapsedTime, photo);
+        }
+    }
+
+    IEnumerator PlayHighScoreVoiceAfter(float delay)
+    {
+        // Realtime: audio isn't affected by timeScale (demo mode can speed the game up)
+        yield return new WaitForSecondsRealtime(delay);
+        highScoreVoiceRoutine = null;
+        SFXManager.Instance?.Play(SFXManager.Instance?.voiceNewHighscore);
+    }
+
+    void CancelHighScoreVoice()
+    {
+        if (highScoreVoiceRoutine != null)
+        {
+            StopCoroutine(highScoreVoiceRoutine);
+            highScoreVoiceRoutine = null;
         }
     }
 
@@ -207,6 +232,8 @@ public class GameManager : MonoBehaviour
 
     public void Restart()
     {
+        CancelHighScoreVoice(); // restarted before the delayed line played
+
         // Reset players — kills coroutines and invalidates pending teleports
         PlayerController[] players = FindObjectsOfType<PlayerController>();
         foreach (var p in players)
